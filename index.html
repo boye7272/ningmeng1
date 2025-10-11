@@ -1,0 +1,2096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>柠檬AI图片图案处理工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#F59E0B', // 柠檬黄作为主色调
+                        secondary: '#10B981',
+                        neutral: '#64748B',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .transition-custom {
+                transition: all 0.3s ease;
+            }
+            .shadow-custom {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+            .btn-disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                background-color: #9CA3AF !important;
+            }
+            .instruction-active {
+                border-color: #F59E0B; /* 柠檬黄黄活跃状态 */
+                background-color: #FFFBEB; /* 浅黄背景 */
+            }
+            .option-active {
+                background-color: #F59E0B;
+                color: white;
+                border-color: #F59E0B;
+            }
+            .image-zoom-container {
+                z-index: 100;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s ease, visibility 0.3s ease;
+            }
+            .image-zoom-container.active {
+                opacity: 1;
+                visibility: visible;
+            }
+            .zoom-image {
+                max-height: 90vh;
+                max-width: 95vw;
+                transition: transform 0.3s ease;
+            }
+            .painting-status {
+                animation: pulse 1.5s infinite;
+            }
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.6; }
+                100% { opacity: 1; }
+            }
+            .painting-steps {
+                animation: slide 20s linear infinite;
+            }
+            @keyframes slide {
+                0% { transform: translateY(0); }
+                100% { transform: translateY(-50%); }
+            }
+            .maintenance-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background-color: #EF4444;
+                color: white;
+                font-size: 10px;
+                font-weight: bold;
+                padding: 2px 6px;
+                border-radius: 10px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            /* 弹窗样式 */
+            .modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s ease, visibility 0.3s ease;
+            }
+            .modal.active {
+                opacity: 1;
+                visibility: visible;
+            }
+            .modal-content {
+                background-color: white;
+                border-radius: 10px;
+                padding: 2rem;
+                max-width: 500px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            }
+            /* 格式转换提示 */
+            .format-conversion-notice {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                font-size: 0.875rem;
+                z-index: 10;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen-screen font-sans">
+    <!-- 顶部导航 -->
+    <header class="bg-white bg-whitewhite shadow shadow-sm sticky top-0 z-10">
+        <div class="container container mxcontainer mx-auto px-4 py-4 flex justify-content-between items-center">
+            <div class="flex items items items-center space-x-2">
+                <i class="fa fa-lemon-o text-primary text-2xl"></i> <!-- 柠檬图标 -->
+                <h1 class="text-xl font-bold text-gray-800">柠檬AI图片图案处理工具</h1>
+            </div>
+            <div class="text-sm text-gray-500 hidden sm:block">
+                基于AI的图片图案提取
+            </div>
+        </div>
+    </header>
+
+    <!-- 配置成功提示 -->
+    <div id="config-toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-3 rounded-lg shadow shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center z-50">
+        <i class="fa fa-check-circle mr-2"></i>
+        <span id="config-message">密码已设置</span>
+    </div>
+
+    <!-- 弹窗：次数用完 -->
+    <div id="usage-exhausted-modal" class="modal">
+        <div class="modal-content">
+            <div class="text-primary text-5xl mb-4">
+                <i class="fa fa-exclamation-circle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">您的使用次数已用完</h3>
+            <p class="text-gray-600 mb-6">请购买次数后再继续使用本服务</p>
+            <div class="flex justify-center">
+                <button class="modal-close bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-custom">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗：更换卡密 -->
+    <div id="change-token-modal" class="modal">
+        <div class="modal-content">
+            <div class="text-primary text-5xl mb-4">
+                <i class="fa fa-exclamation-circle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">卡密类型不匹配</h3>
+            <p class="text-gray-600 mb-6">请更换0.2一次卡密</p>
+            <div class="flex justify-center">
+                <button class="modal-close bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-custom">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗：图片过大 -->
+    <div id="image-too-large-modal" class="modal">
+        <div class="modal-content">
+            <div class="text-primary text-5xl mb-4">
+                <i class="fa fa-exclamation-circle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">图片文件过大</h3>
+            <p class="text-gray-600 mb-6">请上传10MB以下的图片</p>
+            <div class="flex justify-center">
+                <button class="modal-close bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-custom">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片悬浮查看器 -->
+    <div id="image-zoom" class="image-zoom-container fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
+        <button id="close-zoom" class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 transition-custom">
+            <i class="fa fa-times"></i>
+        </button>
+        <img id="zoom-image" class="zoom-image rounded-lg" src="" alt="放大查看的图片">
+    </div>
+
+    <!-- 主要内容：双栏布局 -->
+    <main class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- 左侧：主要功能区 -->
+            <div class="lg:w-2/3 max-w-3xl">
+                <!-- 说明文字 -->
+                <div class="text-center mb-8">
+                    <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-semibold text-gray-800 mb-3">提取图片中的图案</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">上传图片，选择处理方式，我们将使用AI技术帮您提取图案，适合数码印花等用途。</p>
+                </div>
+
+                <!-- 密码输入区域 -->
+                <div class="bg-white rounded-xl shadow-custom p-6 mb-8">
+                    <div class="flex flex-col md:flex-row gap-4 items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fa fa-lock text-primary text-2xl mt-0.5"></i>
+                        </div>
+                        <div class="flex-1 w-full flex flex-col md:flex-row gap-4">
+                            <!-- 密码输入框部分 -->
+                            <div class="w-full md:w-2/3">
+                                <div class="relative w-full">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa fa-shield text-gray-400"></i>
+                                    </div>
+                                    <input type="password" id="access-password" name="access-password" required
+                                        class="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary transition-custom"
+                                        placeholder="请输入你的密码">
+                                    <button type="button" id="toggle-password-visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                        <i class="fa fa-eye-slash"></i>
+                                    </button>
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">输入密码后即可使用图案提取功能</p>
+                            </div>
+                            
+                            <!-- 新增：二维码和购买提示 -->
+                            <div class="w-full md:w-1/3 flex flex-col items-center justify-center p-2 border border-gray-100 rounded-lg bg-gray-50">
+                                <!-- 二维码图片 -->
+                                <img src="https://imgse.com/content/images/users/pGexmj/av_1757788180.png" alt="购买卡密二维码" class="w-24 h-24 object-contain mb-2">
+                                <!-- 提示语 -->
+                                <p class="text-xs text-gray-700 text-center">扫码购买卡密<br>生图消耗0.3￥一张</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 处理指令选择 -->
+                <div class="bg-white rounded-xl shadow-custom p-6 mb-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
+                        <i class="fa fa-list-ul text-primary mr-2"></i>选择处理方式
+                    </h3>
+                    <!-- 修改：将处理方式改为一排显示 -->
+                    <div class="flex flex-wrap gap-4" id="instructions-container">
+                        <!-- 指令选项1 - 循环图 -->
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="repeat" data-model="nano-banana-vip">
+                            <h4 class="font-medium text-gray-800 mb-2">循环图</h4>
+                            <p class="text-sm text-gray-600">将图案处理为四方连续的循环图案，适合大面积印花使用，图案可无缝拼接。</p>
+                        </div>
+                        
+                        <!-- 指令选项2 - 定位花 -->
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="position" data-model="nano-banana-vip">
+                            <h4 class="font-medium text-gray-800 mb-2">定位花</h4>
+                            <p class="text-sm text-gray-600">精确定位图案主体，优化细节展示，适合需要突出主体图案的定位印花。</p>
+                        </div>
+
+                        <!-- 新增指令选项3 - 通用/矢量风格图案 -->
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="vector" data-model="gpt-image-1">
+                            <h4 class="font-medium text-gray-800 mb-2">通用/矢量风格图案</h4>
+                            <p class="text-sm text-gray-600">此方式已通用，球服、徽章、大牌logo等图案的提取，可以选择矢量风格输出。按截图比例选择输出比例。出图时间会稍慢一些、图案清晰些！大概3分钟出一张图。</p>
+                            
+                            <!-- 输出风格和比例选项 - 直接显示在框内下方，不隐藏 -->
+                            <div id="vector-options" class="mt-4">
+                                <!-- 移除了"输出设置"标题 -->
+                                
+                                <!-- 输出风格选项 - 可选择或取消，无默认选择 -->
+                                <div class="mb-3">
+                                    <p class="text-sm text-gray-600 mb-1">输出风格：</p>
+                                    <div class="flex gap-2">
+                                        <button type="button" id="style-vector" class="style-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                                            矢量风格
+                                        </button>
+                                        <button type="button" id="style-seamless" class="style-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                                            无缝循环
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- 输出比例选项 -->
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">输出比例：</p>
+                                    <div class="flex gap-2 flex-wrap">
+                                        <button type="button" id="ratio-1-1" class="ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                                            1:1
+                                        </button>
+                                        <button type="button" id="ratio-2-3" class="ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                                            2:3
+                                        </button>
+                                        <button type="button" id="ratio-3-2" class="ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                                            3:2
+                                        </button>
+                                    </div>
+                                    <!-- 比例选择提示 -->
+                                    <p id="ratio-required" class="mt-1 text-xs text-red-500 hidden">请选择输出比例</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 新增指令选项4 - 进一步处理-->
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-model="nano-banana-vip">
+                            <h4 class="font-medium text-gray-800 mb-2">进一步处理</h4>
+                            <p class="text-sm text-gray-600">换背景、去水印、去绣花、换风格(3D,刺绣,水彩等）、花型图案换色、服装换色换花型、模特换装试衣等都可以在这个处理方式实现</p>
+                            <!-- 自定义指令输入框 -->
+                            <div id="advanced-options" class="mt-4">
+                                <p class="text-sm text-gray-600 mb-1">请输入处理指令：</p>
+                                <textarea id="custom-instruction" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-primary focus:border-primary transition-custom" placeholder="例如：提取花卉图案，将背景换成白色/提取花卉图案，去除绣花图案"></textarea>
+                                <p id="instruction-required" class="mt-1 text-xs text-red-500 hidden">请输入处理指令</p>
+                            </div>
+                        </div>
+
+                        <!-- 新增指令选项5 - 高清放大 -->
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="hd-zoom" data-model="gemini-2.5-flash-image-hd">
+                            <h4 class="font-medium text-gray-800 mb-2">高清放大</h4>
+                            <p class="text-sm text-gray-600">将图片高清放大，增强图案细节，同时保持原有风格和色彩不变，适合需要高质量大图的场景。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图片上传区域 -->
+                <div class="bg-white rounded-xl shadow-custom p-6 mb-8">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <!-- 原始图片区域 -->
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
+                                <i class="fa fa-upload text-primary mr-2"></i>上传图片
+                            </h3>
+                            <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-custom">
+                                <input type="file" id="image-upload" accept="image/*" class="hidden">
+                                <i class="fa fa-image text-5xl text-gray-400 mb-3"></i>
+                                <p class="text-gray-600 mb-2">点击或拖拽图片到此处上传</p>
+                                <p class="text-sm text-gray-500">支持 JPG、PNG 等格式</p>
+                            </div>
+                            <div id="image-preview-container" class="hidden mt-4">
+                                <img id="image-preview" class="max-w-full max-h-64 mx-auto rounded-lg shadow-sm cursor-zoom-in" src="" alt="预览图" title="点击放大查看">
+                                <div class="mt-2 text-right">
+                                    <button id="change-image-btn" class="text-primary text-sm hover:underline">
+                                        <i class="fa fa-refresh mr-1"></i> 更换图片
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 处理结果区域 -->
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
+                                <i class="fa fa-magic text-secondary mr-2"></i>处理结果
+                            </h3>
+                            <div id="result-area" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-custom">
+                                <i class="fa fa-picture-o text-5xl text-gray-400 mb-3"></i>
+                                <p class="text-gray-600">处理后的图案将显示在这里</p>
+                            </div>
+                            <div id="result-image-container" class="hidden mt-4 relative">
+                                <!-- 格式转换提示将在这里动态显示 -->
+                                <div id="format-conversion-notice" class="format-conversion-notice hidden">
+                                    <i class="fa fa-spinner fa-spin mr-1"></i> 转换为PNG格式中...
+                                </div>
+                                <img id="result-image" class="max-w-full max-h-64 mx-auto rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                <div class="mt-3 text-center">
+                                    <!-- 按钮从"复制图片"改为"下载图片" -->
+                                    <button id="download-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center mx-auto transition-custom">
+                                        <i class="fa fa-download mr-1"></i> 下载图片
+                                    </button>
+                                    <div class="mt-2 flex items-center justify-center">
+                                        <button id="reprocess-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-custom">
+                                            <i class="fa fa-refresh mr-1"></i> 
+                                            <span id="reprocess-text">重新处理</span>
+                                            <span id="reprocess-timer" class="ml-2 hidden">20s</span>
+                                        </button>
+                                        <span id="process-count" class="ml-3 text-sm text-gray-500">
+                                            已处理: <span class="font-medium text-gray-700">0</span> 次
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 处理按钮 -->
+                    <div class="mt-6 text-center">
+                        <button id="process-btn" class="bg-secondary hover:bg-secondary/90 text-white px-6 py-3 rounded-lg font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-custom flex items-center justify-center mx-auto">
+                            <i class="fa fa-cog mr-2"></i> 开始提取图案
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 错误提示 -->
+                <div id="error-container" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 mb-8">
+                    <div class="flex">
+                        <i class="fa fa-exclamation-circle text-red-500 mt-0.5 mr-3 text-xl"></i>
+                        <div>
+                            <h3 class="text-lg font-medium text-red-800 mb-1">处理出错</h3>
+                            <p id="error-message" class="text-red-700 text-sm"></p>
+                            <div class="mt-3">
+                                <button id="retry-btn" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                    <i class="fa fa-refresh mr-1"></i> 重试
+                                </button>
+                                <button id="continue-waiting-btn" class="text-primary hover:text-primary/80 text-sm font-medium ml-3">
+                                    <i class="fa fa-clock-o mr-1"></i> 继续等待
+                                </button>
+                                <button id="edit-password-btn" class="text-primary hover:text-primary/80 text-sm font-medium ml-3">
+                                    <i class="fa fa-lock mr-1"></i> 重新输入密码
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：历史记录和处理状态区域 -->
+            <div class="lg:w-1/3">
+                <!-- 历史记录区域 -->
+                <div class="bg-white rounded-xl shadow-custom p-6 mb-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
+                        <i class="fa fa-history text-neutral mr-2"></i>历史记录
+                    </h3>
+                    <div id="history-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-1">
+                        <div class="text-center text-gray-500 text-sm py-6 border border-dashed border-gray-200 rounded-lg col-span-full">
+                            暂无历史记录
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 处理状态 - 固定在历史记录下方，不会被遮挡 -->
+                <div id="status-container" class="hidden bg-white rounded-xl shadow-custom p-6 sticky top-[340px]">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">处理状态</h3>
+                    <div class="flex items-center">
+                        <div id="loading-indicator" class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-primary mr-3"></div>
+                        <p id="status-message" class="text-gray-600">正在处理图片，请稍候...</p>
+                    </div>
+                    <div id="painting-progress" class="hidden mt-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="painting-bar" class="bg-secondary h-2.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                        <div class="mt-2 relative h-6 overflow-hidden">
+                            <div class="painting-steps whitespace-nowrap">
+                                <p class="text-right text-sm text-gray-500 painting-status">AI正在绘制图案... 正在处理细节... 优化图案边缘... 调整色彩平衡... AI正在绘制图案... 正在处理细节... 优化图案边缘... 调整色彩平衡...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-primary h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p id="progress-text" class="text-right text-sm text-gray-500 mt-1">0%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-6 mt-12">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>柠檬图案提取工具 &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script>
+        // DOM元素 - 密码输入相关
+        const accessPasswordInput = document.getElementById('access-password');
+        const togglePasswordVisibility = document.getElementById('toggle-password-visibility');
+        const configToast = document.getElementById('config-toast');
+        const configMessage = document.getElementById('config-message');
+        const editPasswordBtn = document.getElementById('edit-password-btn');
+        const continueWaitingBtn = document.getElementById('continue-waiting-btn');
+        
+        // 弹窗元素
+        const modals = {
+            usageExhausted: document.getElementById('usage-exhausted-modal'),
+            changeToken: document.getElementById('change-token-modal'),
+            imageTooLarge: document.getElementById('image-too-large-modal')
+        };
+        const modalCloseButtons = document.querySelectorAll('.modal-close');
+
+        // 指令选择相关元素
+        const instructionOptions = document.querySelectorAll('.instruction-option');
+        const vectorOptions = document.getElementById('vector-options');
+        const advancedOptions = document.getElementById('advanced-options'); // 新增：进一步处理选项
+        const customInstructionInput = document.getElementById('custom-instruction'); // 新增：自定义指令输入框
+        const instructionRequired = document.getElementById('instruction-required'); // 新增：指令输入提示
+        const styleOptions = document.querySelectorAll('.style-option');
+        const ratioOptions = document.querySelectorAll('.ratio-option');
+        const ratioRequired = document.getElementById('ratio-required'); // 新增：比例选择提示
+        let selectedInstruction = 'repeat';
+        let selectedModel = 'nano-banana-vip';
+        let selectedStyle = []; // 改为数组，支持多选
+        let selectedRatio = null; // 初始无选择
+        let customInstruction = ''; // 新增：存储自定义指令
+
+        // 图片处理相关DOM元素
+        const uploadArea = document.getElementById('upload-area');
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const changeImageBtn = document.getElementById('change-image-btn');
+        const processBtn = document.getElementById('process-btn');
+        const reprocessBtn = document.getElementById('reprocess-btn');
+        const reprocessText = document.getElementById('reprocess-text');
+        const reprocessTimer = document.getElementById('reprocess-timer');
+        const statusContainer = document.getElementById('status-container');
+        const statusMessage = document.getElementById('status-message');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const paintingProgress = document.getElementById('painting-progress');
+        const paintingBar = document.getElementById('painting-bar');
+        const resultArea = document.getElementById('result-area');
+        const resultImageContainer = document.getElementById('result-image-container');
+        const resultImage = document.getElementById('result-image');
+        const downloadBtn = document.getElementById('download-btn'); // 从copyBtn改为downloadBtn
+        const errorContainer = document.getElementById('error-container');
+        const errorMessage = document.getElementById('error-message');
+        const retryBtn = document.getElementById('retry-btn');
+        const historyContainer = document.getElementById('history-container');
+        const processCountElement = document.querySelector('#process-count .font-medium');
+        const formatConversionNotice = document.getElementById('format-conversion-notice');
+        
+        // 图片放大查看相关元素
+        const imageZoom = document.getElementById('image-zoom');
+        const zoomImage = document.getElementById('zoom-image');
+        const closeZoom = document.getElementById('close-zoom');
+        
+        // 处理次数计数器 - 现在是全局累计计数
+        let processCount = 0;
+        // 重新处理冷却时间（秒）
+        const REPROCESS_COOLDOWN = 20;
+        // 冷却计时器ID
+        let cooldownTimer = null;
+        // 绘画状态计时器
+        let paintingTimer = null;
+        // 当前的图片处理会话ID，用于继续等待功能
+        let currentSessionId = null;
+        // 最大等待尝试次数
+        const MAX_WAIT_ATTEMPTS = 5;
+        // 当前等待尝试次数
+        let currentWaitAttempt = 0;
+
+        // 配置参数 - 请根据实际API信息修改以下配置
+        let ACCESS_PASSWORD = "";
+        const API_ENDPOINT = "https://api.tu-zi.com/v1/chat/completions"; // 替换为实际API地址
+        const API_TIMEOUT = 600000; // 延长至10分钟超时，给AI足够的绘画时间
+        const PAINTING_PROGRESS_INTERVAL = 5000; // 绘画进度更新间隔
+        const CHECK_RESULT_INTERVAL = 30000; // 检查结果的间隔时间（30秒）
+        // 新增：添加一个简单的CORS代理，用于解决跨域问题
+        const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+
+        // 五种处理指令的详细描述（新增了高清放大）
+        const instructionDetails = {
+            repeat: `指令：请处理这张图片，提取衣服的图案并铺开
+要求：
+1. 去掉褶皱，重绘平整
+2. 校正图案，还原出图案平整的样子
+3. 把不完整的图案绘制完整
+4. 不要改变图案的颜色和风格
+5. 保持图案大小和画布的比例不变
+6. 做成印刷用的四方无缝循环图案
+
+输出格式：
+仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`,
+            
+            position: `指令：请处理这张图片，提取衣服的图案
+要求：
+1. 去掉褶皱
+2. 重绘平整
+3. 校正图案，还原出图案平整的样子
+4. 缺失的图案向外补充完整
+5. 不要改变图案的颜色和风格
+6. 优化图案主体定位，突出主体展示，适合定位印花使用
+
+输出格式：
+仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`,
+
+            vector: `指令：请处理这张图片，将图案做成壁纸。
+要求：
+1. 去掉褶皱
+2. 还原出图案没被折叠进去的样子
+3. 不要改变图案排布
+4. 不要改变图案位置
+5. 图案缺失部分向外补充完整
+6. 不要改变图案的颜色
+{styleOptions}
+{ratioOption}
+
+输出格式：
+仅返回一个直接可访问的图片URL，格式为JPG或PNG，不添加任何其他文字或说明。`,
+
+            // 新增：进一步处理的指令模板
+            advanced: `{customInstruction}
+
+输出格式：
+仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`,
+
+            // 新增：高清放大的指令
+            "hd-zoom": `重绘这张图片，根据图案风格增强细节，细节笔触要流畅干净，降噪并保持颜色不变
+
+输出格式：
+仅返回一个直接可访问的图片URL，格式为JPG或PNG，不添加任何其他文字或说明。`
+        };
+
+        // 初始状态：处理按钮不可用
+        processBtn.disabled = true;
+
+        // 弹窗关闭按钮事件
+        modalCloseButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // 关闭所有弹窗
+                Object.values(modals).forEach(modal => {
+                    modal.classList.remove('active');
+                });
+                
+                // 对于卡密相关弹窗，滚动到密码输入区域
+                if (button.closest('#usage-exhausted-modal') || button.closest('#change-token-modal')) {
+                    accessPasswordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                        accessPasswordInput.focus();
+                    }, 500);
+                }
+            });
+        });
+
+        // 点击弹窗背景关闭
+        Object.values(modals).forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                    
+                    // 对于卡密相关弹窗，滚动到密码输入区域
+                    if (modal === modals.usageExhausted || modal === modals.changeToken) {
+                        accessPasswordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => {
+                            accessPasswordInput.focus();
+                        }, 500);
+                    }
+                }
+            });
+        });
+
+        // 指令选择逻辑
+        instructionOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // 移除所有选项的活跃状态
+                instructionOptions.forEach(opt => opt.classList.remove('instruction-active'));
+                // 设置当前选项为活跃状态
+                option.classList.add('instruction-active');
+                // 记录选中的指令和模型
+                selectedInstruction = option.getAttribute('data-instruction');
+                selectedModel = option.getAttribute('data-model');
+                
+                // 如果选择的是循环图、定位花或高清放大，取消矢量风格的比例选择和自定义指令
+                if (selectedInstruction === 'repeat' || selectedInstruction === 'position' || selectedInstruction === 'hd-zoom') {
+                    // 取消所有风格选择
+                    styleOptions.forEach(opt => opt.classList.remove('option-active'));
+                    selectedStyle = [];
+                    
+                    // 取消所有比例选择
+                    ratioOptions.forEach(opt => opt.classList.remove('option-active'));
+                    selectedRatio = null;
+                    
+                    // 清空自定义指令
+                    customInstructionInput.value = '';
+                    customInstruction = '';
+                    
+                    // 隐藏提示
+                    ratioRequired.classList.add('hidden');
+                    instructionRequired.classList.add('hidden');
+                } 
+                // 如果选择的是进一步处理，不需要比例选择，但需要清空其他选择
+                else if (selectedInstruction === 'advanced') {
+                    // 取消所有风格选择
+                    styleOptions.forEach(opt => opt.classList.remove('option-active'));
+                    selectedStyle = [];
+                    
+                    // 取消所有比例选择
+                    ratioOptions.forEach(opt => opt.classList.remove('option-active'));
+                    selectedRatio = null;
+                    
+                    // 隐藏提示
+                    ratioRequired.classList.add('hidden');
+                    
+                    // 聚焦到自定义指令输入框
+                    setTimeout(() => {
+                        customInstructionInput.focus();
+                    }, 300);
+                }
+                // 矢量风格
+                else {
+                    // 清空自定义指令
+                    customInstructionInput.value = '';
+                    customInstruction = '';
+                    
+                    // 隐藏指令输入提示
+                    instructionRequired.classList.add('hidden');
+                }
+                
+                // 验证按钮状态
+                validateProcessButton();
+            });
+        });
+
+        // 输出风格选择逻辑（可选择或取消，支持多选）
+        styleOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // 切换选中状态
+                const isActive = option.classList.contains('option-active');
+                const styleId = option.id;
+                
+                if (!isActive) {
+                    // 激活当前选项
+                    option.classList.add('option-active');
+                    // 根据按钮ID添加对应的风格
+                    if (styleId === 'style-vector') {
+                        selectedStyle.push('vector');
+                    } else if (styleId === 'style-seamless') {
+                        selectedStyle.push('seamless');
+                    }
+                } else {
+                    // 取消选择
+                    option.classList.remove('option-active');
+                    // 从数组中移除对应的风格
+                    if (styleId === 'style-vector') {
+                        selectedStyle = selectedStyle.filter(s => s !== 'vector');
+                    } else if (styleId === 'style-seamless') {
+                        selectedStyle = selectedStyle.filter(s => s !== 'seamless');
+                    }
+                }
+            });
+        });
+
+        // 输出比例选择逻辑
+        ratioOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // 切换选中状态
+                const isActive = option.classList.contains('option-active');
+                
+                // 移除所有选项的活跃状态
+                ratioOptions.forEach(opt => opt.classList.remove('option-active'));
+                
+                // 如果之前不是活跃状态，则激活当前选项
+                if (!isActive) {
+                    option.classList.add('option-active');
+                    selectedRatio = option.id.replace('ratio-', '').replace('-', ':');
+                } else {
+                    selectedRatio = null; // 取消选择
+                }
+                
+                // 隐藏比例选择提示
+                ratioRequired.classList.add('hidden');
+                
+                // 验证按钮状态
+                validateProcessButton();
+            });
+        });
+
+        // 新增：自定义指令输入处理
+        customInstructionInput.addEventListener('input', () => {
+            customInstruction = customInstructionInput.value.trim();
+            // 隐藏提示
+            instructionRequired.classList.add('hidden');
+            // 验证按钮状态
+            validateProcessButton();
+        });
+
+        // 验证处理按钮状态
+        function validateProcessButton() {
+            // 基本条件：密码已输入且有图片预览
+            const hasPassword = !!ACCESS_PASSWORD;
+            const hasImage = imagePreviewContainer.classList.contains('hidden') === false;
+            
+            // 特殊条件：如果选择了矢量风格，必须选择比例
+            const vectorStyleValid = selectedInstruction !== 'vector' || !!selectedRatio;
+            
+            // 新增：如果选择了进一步处理，必须输入指令
+            const advancedValid = selectedInstruction !== 'advanced' || (!!customInstruction && customInstruction.length >= 5);
+            
+            // 高清放大不需要额外条件
+            
+            // 更新按钮状态
+            processBtn.disabled = !(hasPassword && hasImage && vectorStyleValid && advancedValid);
+        }
+
+        // 密码输入实时处理
+        accessPasswordInput.addEventListener('input', () => {
+            const password = accessPasswordInput.value.trim();
+            ACCESS_PASSWORD = password;
+            
+            // 验证按钮状态
+            validateProcessButton();
+            
+            // 如果输入了密码，显示简短提示
+            if (password && password.length >= 3) {
+                configMessage.textContent = '密码已设置';
+                configToast.classList.remove('translate-y-20', 'opacity-0');
+                
+                // 2秒后隐藏提示
+                setTimeout(() => {
+                    configToast.classList.add('translate-y-20', 'opacity-0');
+                }, 2000);
+            }
+        });
+
+        // 切换密码可见性
+        togglePasswordVisibility.addEventListener('click', () => {
+            const type = accessPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            accessPasswordInput.setAttribute('type', type);
+            togglePasswordVisibility.innerHTML = type === 'password' ? 
+                '<i class="fa fa-eye-slash"></i>' : 
+                '<i class="fa fa-eye"></i>';
+        });
+
+        // 重新输入密码按钮
+        editPasswordBtn.addEventListener('click', () => {
+            errorContainer.classList.add('hidden');
+            // 滚动到密码输入区域
+            accessPasswordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // 聚焦到输入框
+            setTimeout(() => {
+                accessPasswordInput.focus();
+            }, 500);
+        });
+
+        // 继续等待按钮事件
+        continueWaitingBtn.addEventListener('click', () => {
+            if (!currentSessionId) {
+                // 如果没有会话ID，直接重试
+                errorContainer.classList.add('hidden');
+                processImage();
+                return;
+            }
+            
+            // 显示继续等待的状态
+            errorContainer.classList.add('hidden');
+            statusContainer.classList.remove('hidden');
+            statusMessage.textContent = `继续等待结果 (${currentWaitAttempt + 1}/${MAX_WAIT_ATTEMPTS})`;
+            paintingProgress.style.display = 'block';
+            processBtn.disabled = true;
+            reprocessBtn.disabled = true;
+            
+            // 增加等待尝试次数
+            currentWaitAttempt++;
+            
+            // 检查是否超过最大尝试次数
+            if (currentWaitAttempt >= MAX_WAIT_ATTEMPTS) {
+                showError(`已等待较长时间仍未获取结果。\n\n建议：\n1. 检查图片是否清晰\n2. 尝试使用较小的图片\n3. 稍后再试`);
+                currentWaitAttempt = 0;
+                return;
+            }
+            
+            // 继续检查结果
+            setTimeout(() => {
+                checkProcessingResult(currentSessionId);
+            }, 1000);
+        });
+
+        // 重试按钮事件
+        retryBtn.addEventListener('click', () => {
+            currentWaitAttempt = 0; // 重置等待尝试次数
+            errorContainer.classList.add('hidden');
+            processImage();
+        });
+
+        // 上传区域点击触发文件选择
+        uploadArea.addEventListener('click', () => {
+            imageUpload.click();
+        });
+
+        // 更换图片按钮 - 不再重置处理次数，只清除冷却
+        changeImageBtn.addEventListener('click', () => {
+            imageUpload.click();
+            // 清除冷却状态
+            clearCooldown();
+            // 重置等待尝试次数
+            currentWaitAttempt = 0;
+        });
+
+        // 重新处理按钮 - 添加冷却机制
+        reprocessBtn.addEventListener('click', () => {
+            // 检查是否在冷却中
+            if (reprocessBtn.classList.contains('btn-disabled')) {
+                return;
+            }
+            
+            // 检查矢量风格是否已选择比例
+            if (selectedInstruction === 'vector' && !selectedRatio) {
+                // 显示比例选择提示
+                ratioRequired.classList.remove('hidden');
+                // 滚动到比例选择区域
+                document.getElementById('vector-options').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            
+            // 新增：检查进一步处理是否已输入指令
+            if (selectedInstruction === 'advanced' && (!customInstruction || customInstruction.length < 5)) {
+                // 显示指令输入提示
+                instructionRequired.classList.remove('hidden');
+                // 滚动到指令输入区域
+                customInstructionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 聚焦到输入框
+                setTimeout(() => {
+                    customInstructionInput.focus();
+                }, 300);
+                return;
+            }
+            
+            currentWaitAttempt = 0; // 重置等待尝试次数
+            processImage();
+            // 启动冷却计时器
+            startCooldown();
+        });
+
+        // 启动冷却计时器
+        function startCooldown() {
+            let secondsLeft = REPROCESS_COOLDOWN;
+            
+            // 禁用按钮
+            reprocessBtn.disabled = true;
+            reprocessBtn.classList.add('btn-disabled');
+            
+            // 显示倒计时
+            reprocessText.textContent = '重新处理';
+            reprocessTimer.textContent = `${secondsLeft}s`;
+            reprocessTimer.classList.remove('hidden');
+            
+            // 清除任何现有计时器
+            if (cooldownTimer) {
+                clearInterval(cooldownTimer);
+            }
+            
+            // 设置新计时器
+            cooldownTimer = setInterval(() => {
+                secondsLeft--;
+                reprocessTimer.textContent = `${secondsLeft}s`;
+                
+                if (secondsLeft <= 0) {
+                    clearCooldown();
+                }
+            }, 1000);
+        }
+
+        // 清除冷却状态
+        function clearCooldown() {
+            if (cooldownTimer) {
+                clearInterval(cooldownTimer);
+                cooldownTimer = null;
+            }
+            
+            // 启用按钮
+            reprocessBtn.disabled = false;
+            reprocessBtn.classList.remove('btn-disabled');
+            
+            // 隐藏倒计时
+            reprocessTimer.classList.add('hidden');
+        }
+
+        // 拖拽功能
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-primary');
+            uploadArea.classList.add('bg-yellow-50'); // 柠檬黄背景色
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('border-primary');
+            uploadArea.classList.remove('bg-yellow-50');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-primary');
+            uploadArea.classList.remove('bg-yellow-50');
+            
+            if (e.dataTransfer.files.length) {
+                imageUpload.files = e.dataTransfer.files;
+                handleImageUpload();
+                // 清除冷却状态
+                clearCooldown();
+                // 重置等待尝试次数
+                currentWaitAttempt = 0;
+            }
+        });
+
+        // 处理图片上传
+        imageUpload.addEventListener('change', handleImageUpload);
+
+        function handleImageUpload() {
+            const file = imageUpload.files[0];
+            if (!file) return;
+
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                showError('请上传图片文件');
+                return;
+            }
+
+            // 检查文件大小 (限制10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                // 显示图片过大弹窗
+                modals.imageTooLarge.classList.add('active');
+                return;
+            }
+
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.classList.remove('hidden');
+                uploadArea.classList.add('hidden');
+                
+                // 重置结果区域
+                resultImageContainer.classList.add('hidden');
+                resultArea.classList.remove('hidden');
+                errorContainer.classList.add('hidden');
+                
+                // 验证按钮状态
+                validateProcessButton();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 更新处理次数显示
+        function updateProcessCount() {
+            processCountElement.textContent = processCount;
+        }
+
+        // 处理按钮点击事件
+        processBtn.addEventListener('click', () => {
+            // 检查是否已输入密码
+            if (!ACCESS_PASSWORD) {
+                // 滚动到密码输入区域提示用户
+                accessPasswordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 闪烁提示
+                accessPasswordInput.classList.add('border-red-300');
+                setTimeout(() => {
+                    accessPasswordInput.classList.remove('border-red-300');
+                }, 1000);
+                return;
+            }
+            
+            // 如果选择了矢量风格处理方式，检查是否选择了比例
+            if (selectedInstruction === 'vector' && !selectedRatio) {
+                // 显示比例选择提示
+                ratioRequired.classList.remove('hidden');
+                // 滚动到比例选择区域
+                document.getElementById('vector-options').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            
+            // 新增：如果选择了进一步处理，检查是否输入了指令
+            if (selectedInstruction === 'advanced' && (!customInstruction || customInstruction.length < 5)) {
+                // 显示指令输入提示
+                instructionRequired.classList.remove('hidden');
+                // 滚动到指令输入区域
+                customInstructionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 聚焦到输入框
+                setTimeout(() => {
+                    customInstructionInput.focus();
+                }, 300);
+                return;
+            }
+            
+            processImage();
+            // 首次处理也启动冷却
+            startCooldown();
+        });
+
+        // 模拟绘画进度更新
+        function startPaintingProgressSimulation() {
+            // 重置绘画进度
+            let paintingProgress = 0;
+            paintingBar.style.width = '0%';
+            paintingProgress.style.display = 'block';
+            
+            // 清除任何现有计时器
+            if (paintingTimer) {
+                clearInterval(paintingTimer);
+            }
+            
+            // 设置绘画进度模拟
+            paintingTimer = setInterval(() => {
+                // 缓慢增加进度，模拟AI绘画过程
+                paintingProgress += Math.random() * 5;
+                if (paintingProgress > 90) paintingProgress = 90; // 保留最后10%
+                paintingBar.style.width = `${paintingProgress}%`;
+            }, PAINTING_PROGRESS_INTERVAL);
+        }
+
+        // 停止绘画进度模拟并完成
+        function completePaintingProgress() {
+            if (paintingTimer) {
+                clearInterval(paintingTimer);
+                paintingTimer = null;
+            }
+            paintingBar.style.width = '100%';
+            setTimeout(() => {
+                paintingProgress.style.display = 'none';
+            }, 1000);
+        }
+
+        // 图片处理函数
+        async function processImage() {
+            // 检查是否已输入密码
+            if (!ACCESS_PASSWORD) {
+                showError('请先输入密码');
+                return;
+            }
+            
+            // 如果选择了矢量风格处理方式，检查是否选择了比例
+            if (selectedInstruction === 'vector' && !selectedRatio) {
+                showError('请为通用/矢量风格图案选择输出比例');
+                return;
+            }
+            
+            // 新增：如果选择了进一步处理，检查是否输入了指令
+            if (selectedInstruction === 'advanced' && (!customInstruction || customInstruction.length < 5)) {
+                showError('请输入有效的处理指令（至少5个字符）');
+                return;
+            }
+            
+            // 隐藏错误信息
+            errorContainer.classList.add('hidden');
+            
+            // 显示处理状态 - 确保状态容器始终显示
+            statusContainer.classList.remove('hidden');
+            statusMessage.textContent = '正在准备图片...';
+            updateProgress(10);
+            paintingProgress.style.display = 'none';
+            
+            // 禁用处理按钮
+            processBtn.disabled = true;
+            reprocessBtn.disabled = true;
+
+            try {
+                // 生成会话ID，用于跟踪当前处理任务
+                currentSessionId = generateSessionId();
+                
+                // 添加请求超时控制（10分钟）
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+                // 读取图片并转换为base64
+                const base64Image = await convertImageToBase64(imagePreview.src);
+                updateProgress(30);
+                statusMessage.textContent = '正在发送请求...';
+
+                // 构建指令文本，根据选择动态添加风格和比例参数
+                let instructionText = instructionDetails[selectedInstruction] || instructionDetails.repeat;
+                
+                // 处理矢量风格的动态参数
+                if (selectedInstruction === 'vector') {
+                    // 风格参数：根据选择的按钮添加对应的指令
+                    let styleTexts = [];
+                    if (selectedStyle.includes('vector')) {
+                        styleTexts.push('7. 输出风格矢量');
+                    }
+                    if (selectedStyle.includes('seamless')) {
+                        styleTexts.push('7. 要求四方循环无缝衔接');
+                    }
+                    
+                    // 处理序号问题，如果有多个风格选项，调整序号
+                    if (styleTexts.length > 1) {
+                        styleTexts = styleTexts.map((text, index) => {
+                            return text.replace('7.', `${7 + index}.`);
+                        });
+                    }
+                    
+                    const styleText = styleTexts.join('\n');
+                    
+                    // 比例参数：必须选择
+                    const ratioText = `8. 输出比例${selectedRatio}`;
+                    
+                    // 替换占位符
+                    instructionText = instructionText
+                        .replace('{styleOptions}', styleText ? styleText : '')
+                        .replace('{ratioOption}', ratioText);
+                } 
+                // 新增：处理进一步处理的自定义指令
+                else if (selectedInstruction === 'advanced') {
+                    // 替换占位符为用户输入的自定义指令
+                    instructionText = instructionText.replace('{customInstruction}', customInstruction);
+                }
+                
+                // 添加会话ID
+                instructionText += `\n\n会话ID: ${currentSessionId}`;
+
+                // API调用
+                const result = await Promise.race([
+                    callPatternExtractionAPI(base64Image, controller.signal, currentSessionId, instructionText),
+                    new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('请求超时，超过10分钟未收到响应')), API_TIMEOUT);
+                    })
+                ]);
+
+                clearTimeout(timeoutId);
+                
+                // 检查结果是否包含图片URL或Base64
+                if (!result || (!result.imageUrl && !result.base64Image)) {
+                    // 如果没有图片URL但检测到绘画状态，进入轮询等待模式
+                    if (result && result.isPainting) {
+                        statusMessage.textContent = `AI正在绘制图案，将定期检查结果 (1/${MAX_WAIT_ATTEMPTS})`;
+                        paintingProgress.style.display = 'block';
+                        startPaintingProgressSimulation();
+                        updateProgress(60);
+                        
+                        // 开始定期检查结果
+                        currentWaitAttempt = 1;
+                        setTimeout(() => {
+                            checkProcessingResult(currentSessionId);
+                        }, CHECK_RESULT_INTERVAL);
+                        return;
+                    } else {
+                        throw new Error('未能获取有效的处理结果');
+                    }
+                }
+                
+                // 如果获取到图片URL或Base64，继续处理
+                updateProgress(80);
+                statusMessage.textContent = '正在处理结果...';
+                completePaintingProgress();
+
+                // 显示结果
+                // 增加处理次数（全局累计）
+                processCount++;
+                updateProcessCount();
+                
+                // 直接显示图片，不进行格式转换
+                resultImage.onload = () => {
+                    resultArea.classList.add('hidden');
+                    resultImageContainer.classList.remove('hidden');
+                    updateProgress(100);
+                    statusMessage.textContent = '处理完成';
+                    
+                    // 添加到历史记录
+                    addToHistory(resultImage.src);
+                    
+                    // 延迟隐藏状态框
+                    setTimeout(() => {
+                        statusContainer.classList.add('hidden');
+                        updateProgress(0);
+                        // 恢复按钮状态，但保持冷却状态
+                        reprocessBtn.disabled = reprocessBtn.classList.contains('btn-disabled');
+                        // 验证按钮状态
+                        validateProcessButton();
+                        // 重置等待尝试次数
+                        currentWaitAttempt = 0;
+                    }, 1500);
+                };
+                
+                // 处理图片加载失败的情况
+                resultImage.onerror = () => {
+                    throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                };
+                
+                // 使用Base64或URL设置图片
+                resultImage.src = result.base64Image || result.imageUrl;
+                
+            } catch (error) {
+                console.error('处理图片时出错:', error);
+                completePaintingProgress();
+                
+                // 关键修复：确保状态容器可见并显示错误状态
+                statusContainer.classList.remove('hidden');
+                statusMessage.textContent = '处理出错';
+                updateProgress(0);
+                
+                // 关键修复：检查是否是401 Unauthorized错误
+                if (error.message.includes('Unauthorized') && error.message.includes('401')) {
+                    // 显示次数用完弹窗
+                    modals.usageExhausted.classList.add('active');
+                    // 清空密码输入
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    // 禁用处理按钮
+                    processBtn.disabled = true;
+                    return;
+                }
+                
+                // 新增：检查是否是特定的503错误
+                if (error.message.includes('Service Unavailable') && 
+                    error.message.includes('503') && 
+                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                    // 显示更换卡密弹窗
+                    modals.changeToken.classList.add('active');
+                    // 清空密码输入
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    // 禁用处理按钮
+                    processBtn.disabled = true;
+                    return;
+                }
+                
+                // 显示错误信息
+                let errorMsg = error.message || '处理图片时发生错误，请重试';
+                if (error.name === 'AbortError') {
+                    errorMsg = '请求已超时，超过10分钟未收到响应，请重试';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMsg = '无法连接到服务器，请检查网络连接';
+                } else if (error.message.includes('Unauthorized') || error.message.includes('Invalid Token')) {
+                    errorMsg += '\n\n请检查密码是否正确有效';
+                }
+                
+                // 如果是绘画状态但未获取到URL，提供继续等待选项
+                if (error.message.includes('未找到有效的图片地址') && 
+                    error.message.includes('🖌️正在绘画')) {
+                    errorMsg += '\n\nAI可能仍在处理中，您可以选择"继续等待"或"重试"';
+                }
+                
+                showError(errorMsg);
+                resetProcessingState();
+                // 错误情况下清除冷却
+                clearCooldown();
+            }
+        }
+
+        // 检查处理结果（用于轮询）
+        async function checkProcessingResult(sessionId) {
+            // 如果会话ID不匹配，说明用户已开始新的处理，放弃检查
+            if (sessionId !== currentSessionId) {
+                return;
+            }
+            
+            try {
+                statusMessage.textContent = `正在检查结果 (${currentWaitAttempt}/${MAX_WAIT_ATTEMPTS})`;
+                
+                // 构建检查结果的请求
+                const payload = {
+                    "model": selectedModel,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": `请返回会话ID为${sessionId}的图片处理结果，仅返回图片URL或Base64编码，不添加任何其他文字。`
+                                }
+                            ]
+                        }
+                    ],
+                    "max_tokens": 100
+                };
+                
+                const response = await fetch(API_ENDPOINT, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${ACCESS_PASSWORD}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                // 关键修复：检查是否是401 Unauthorized错误
+                if (response.status === 401) {
+                    // 显示次数用完弹窗
+                    modals.usageExhausted.classList.add('active');
+                    // 清空密码输入
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    // 禁用处理按钮
+                    processBtn.disabled = true;
+                    // 重置状态
+                    statusContainer.classList.add('hidden');
+                    return;
+                }
+                
+                // 新增：检查是否是特定的503错误
+                if (response.status === 503) {
+                    const errorDetails = await response.text();
+                    if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                        // 显示更换卡密弹窗
+                        modals.changeToken.classList.add('active');
+                        // 清空密码输入
+                        accessPasswordInput.value = '';
+                        ACCESS_PASSWORD = '';
+                        // 禁用处理按钮
+                        processBtn.disabled = true;
+                        // 重置状态
+                        statusContainer.classList.add('hidden');
+                        return;
+                    }
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`检查结果失败: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                let fullResponse = '';
+                
+                // 处理非流式响应
+                if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+                    fullResponse = data.choices[0].message.content;
+                }
+                
+                // 提取图片URL或Base64
+                const extractedData = extractImageData(fullResponse);
+                const imageUrl = extractedData.imageUrl;
+                const base64Image = extractedData.base64Image;
+
+                // 检查是否仍在绘画中
+                const isPainting = fullResponse.includes('🖌️正在绘画') || 
+                                  fullResponse.includes('仍在处理') ||
+                                  fullResponse.includes('继续绘画');
+
+                if (imageUrl || base64Image) {
+                    // 获取到图片URL或Base64，显示结果
+                    completePaintingProgress();
+                    updateProgress(80);
+                    statusMessage.textContent = '正在处理结果...';
+                    
+                    // 增加处理次数（全局累计）
+                    processCount++;
+                    updateProcessCount();
+                    
+                    // 直接显示图片，不进行格式转换
+                    resultImage.onload = () => {
+                        resultArea.classList.add('hidden');
+                        resultImageContainer.classList.remove('hidden');
+                        updateProgress(100);
+                        statusMessage.textContent = '处理完成';
+                        
+                        // 添加到历史记录
+                        addToHistory(resultImage.src);
+                        
+                        // 延迟隐藏状态框
+                        setTimeout(() => {
+                            statusContainer.classList.add('hidden');
+                            updateProgress(0);
+                            // 恢复按钮状态，但保持冷却状态
+                            reprocessBtn.disabled = reprocessBtn.classList.contains('btn-disabled');
+                            // 验证按钮状态
+                            validateProcessButton();
+                            // 重置等待尝试次数
+                            currentWaitAttempt = 0;
+                        }, 1500);
+                    };
+                    
+                    // 使用Base64或URL设置图片
+                    resultImage.src = base64Image || imageUrl;
+                    
+                    return;
+                }
+                
+                // 检查是否仍在绘画中
+                if (isPainting && currentWaitAttempt < MAX_WAIT_ATTEMPTS) {
+                    // 仍在绘画中且未超过最大尝试次数，继续等待
+                    currentWaitAttempt++;
+                    statusMessage.textContent = `AI仍在绘制图案，将继续等待 (${currentWaitAttempt}/${MAX_WAIT_ATTEMPTS})`;
+                    updateProgress(60 + (currentWaitAttempt / MAX_WAIT_ATTEMPTS) * 20);
+                    
+                    setTimeout(() => {
+                        checkProcessingResult(sessionId);
+                    }, CHECK_RESULT_INTERVAL);
+                } else {
+                    // 已超过最大尝试次数或不再绘画但无结果
+                    throw new Error(`经过多次尝试仍未获取到有效图片地址。\n\n最后响应: ${fullResponse.substring(0, 200)}...`);
+                }
+                
+            } catch (error) {
+                console.error('检查处理结果时出错:', error);
+                
+                // 关键修复：检查是否是401 Unauthorized错误
+                if (error.message.includes('Unauthorized') && error.message.includes('401')) {
+                    // 显示次数用完弹窗
+                    modals.usageExhausted.classList.add('active');
+                    // 清空密码输入
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    // 禁用处理按钮
+                    processBtn.disabled = true;
+                    // 重置状态
+                    statusContainer.classList.add('hidden');
+                    return;
+                }
+                
+                // 新增：检查是否是特定的503错误
+                if (error.message.includes('Service Unavailable') && 
+                    error.message.includes('503') && 
+                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                    // 显示更换卡密弹窗
+                    modals.changeToken.classList.add('active');
+                    // 清空密码输入
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    // 禁用处理按钮
+                    processBtn.disabled = true;
+                    // 重置状态
+                    statusContainer.classList.add('hidden');
+                    return;
+                }
+                
+                showError(`检查结果时出错: ${error.message}\n\n您可以选择"继续等待"或"重试"`);
+                resetProcessingState();
+            }
+        }
+
+        // 生成会话ID
+        function generateSessionId() {
+            // 生成一个随机的会话ID，用于跟踪处理任务
+            return 'session_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        }
+
+        // 转换图片为base64
+        function convertImageToBase64(imageUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                // 添加图片加载超时
+                const imgTimeout = setTimeout(() => {
+                    reject(new Error('图片加载超时'));
+                }, 10000);
+                img.onload = () => {
+                    clearTimeout(imgTimeout);
+                    const canvas = document.createElement('canvas');
+                    // 限制最大尺寸
+                    const maxDim = 800;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height && width > maxDim) {
+                        height = height * (maxDim / width);
+                        width = maxDim;
+                    } else if (height > maxDim) {
+                        width = width * (maxDim / height);
+                        height = maxDim;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    try {
+                        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                        resolve(base64);
+                    } catch (error) {
+                        reject(new Error('无法处理图片，请尝试其他图片'));
+                    }
+                };
+                img.onerror = () => {
+                    clearTimeout(imgTimeout);
+                    reject(new Error('图片加载失败，请重试'));
+                };
+                img.src = imageUrl;
+            });
+        }
+
+        // 调用图案提取API
+        async function callPatternExtractionAPI(base64Image, signal, sessionId, instructionText) {
+            // 显示处理进度
+            statusMessage.textContent = '正在分析图片内容...';
+
+            // 构建请求参数
+            const payload = {
+                "model": selectedModel,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": instructionText
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": `data:image/jpeg;base64,${base64Image}`
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "max_tokens": 300,
+                "stream": true  // 启用流式响应
+            };
+
+            try {
+                // 发送API请求
+                const response = await fetch(API_ENDPOINT, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${ACCESS_PASSWORD}`
+                    },
+                    body: JSON.stringify(payload),
+                    signal: signal
+                });
+
+                // 关键修复：检查是否是401 Unauthorized错误
+                if (response.status === 401) {
+                    throw new Error(`API请求失败: Unauthorized（状态码：401）`);
+                }
+                
+                // 新增：检查是否是特定的503错误
+                if (response.status === 503) {
+                    const errorDetails = await response.text();
+                    if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                        throw new Error(`API请求失败: Service Unavailable（状态码：503）\n${errorDetails}`);
+                    }
+                }
+
+                if (!response.ok) {
+                    // 获取详细错误信息
+                    let errorDetails = await response.text();
+                    try {
+                        const errorJson = JSON.parse(errorDetails);
+                        errorDetails = errorJson.error?.message || errorDetails;
+                    } catch (e) {
+                        // 非JSON格式的错误信息
+                    }
+                    
+                    throw new Error(`API请求失败: ${response.statusText}（状态码：${response.status}）\n${errorDetails}`);
+                }
+
+                // 处理流式响应
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let content = '';
+                let receivedPaintingStatus = false;
+                
+                // 更新状态显示
+                statusMessage.textContent = '正在接收结果...';
+                
+                // 循环读取流数据
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    // 解码并累加内容
+                    const chunk = decoder.decode(value, { stream: true });
+                    content += chunk;
+                    
+                    // 检测到绘画状态信息时显示专门的进度条
+                    if (!receivedPaintingStatus && chunk.includes('🖌️正在绘画')) {
+                        receivedPaintingStatus = true;
+                        statusMessage.textContent = 'AI正在生成图案...';
+                        paintingProgress.style.display = 'block';
+                        startPaintingProgressSimulation();
+                    }
+                    
+                    // 更新进度
+                    updateProgress(30 + Math.min(40, Math.floor((content.length / 1000) * 40)));
+                }
+                
+                // 解析流式响应内容
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                let fullResponse = '';
+                
+                // 合并所有流数据
+                for (const line of lines) {
+                    const data = line.replace(/^data: /, '');
+                    if (data === '[DONE]') break;
+                    
+                    try {
+                        const json = JSON.parse(data);
+                        if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
+                            fullResponse += json.choices[0].delta.content;
+                        }
+                    } catch (e) {
+                        console.warn('解析流式数据失败:', e);
+                    }
+                }
+                
+                // 提取图片URL或Base64
+                const extractedData = extractImageData(fullResponse);
+                const imageUrl = extractedData.imageUrl;
+                const base64Image = extractedData.base64Image;
+
+                // 检查是否仍在绘画中
+                const isPainting = fullResponse.includes('🖌️正在绘画') || 
+                                  fullResponse.includes('仍在处理') ||
+                                  fullResponse.includes('继续绘画');
+
+                // 如果没有图片URL但检测到绘画状态，返回绘画状态
+                if (!imageUrl && !base64Image && isPainting) {
+                    return { isPainting: true };
+                }
+
+                // 如果第一次提取失败，等待一段时间再试一次
+                if (!imageUrl && !base64Image) {
+                    console.log("第一次提取URL失败，等待2秒后重试...");
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    const retryResult = extractImageData(fullResponse);
+                    return { imageUrl: retryResult.imageUrl, base64Image: retryResult.base64Image };
+                }
+
+                if (!imageUrl && !base64Image) {
+                    console.error("无法提取图片URL或Base64，原始响应内容:", fullResponse);
+                    throw new Error(`API返回内容中未找到有效的图片地址: ${fullResponse.substring(0, 200)}...`);
+                }
+
+                return { imageUrl: imageUrl, base64Image: base64Image };
+            } catch (error) {
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    throw new Error(`无法连接到API服务器: ${error.message}\n请检查API地址是否正确或网络连接是否正常`);
+                }
+                throw error;
+            }
+        }
+
+        // 增强的图片数据提取函数，支持URL和Base64
+        function extractImageData(content) {
+            // 1. 移除所有绘画状态信息
+            // 匹配以>开头，包含🖌️或"正在绘画"的行
+            let cleanedContent = content.replace(/^>.*?(🖌️|正在绘画).*?(?=\n|$)/gmi, '').trim();
+            
+            // 2. 移除所有可能的状态提示文本
+            const statusPatterns = [
+                /正在生成图片.../gi,
+                /正在处理您的请求.../gi,
+                /请稍候.../gi,
+                /绘画中.../gi,
+                /仍在处理.../gi,
+                /继续绘画.../gi
+            ];
+            
+            statusPatterns.forEach(pattern => {
+                cleanedContent = cleanedContent.replace(pattern, '').trim();
+            });
+            
+            // 3. 移除所有可能的代码块标记
+            cleanedContent = cleanedContent
+                .replace(/`/g, '')  // 移除所有反引号
+                .replace(/^json\s*/i, '')  // 移除开头的json标记
+                .replace(/^```.*?```$/gs, '') // 移除代码块
+                .replace(/^<ImageHere>$/, ''); // 移除可能的占位符
+            
+            // 4. 尝试提取Base64编码
+            // 匹配图片的Base64编码（data:image/开头）
+            const base64Match = cleanedContent.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
+            if (base64Match && base64Match[0]) {
+                return { imageUrl: null, base64Image: base64Match[0] };
+            }
+            
+            // 5. 尝试从Markdown图片格式中提取URL（如![None](url)）
+            const markdownImageMatch = cleanedContent.match(/!\[.*?\]\((https?:\/\/[^\)]+\.(jpg|jpeg|png|gif|webp))\)/i);
+            if (markdownImageMatch && markdownImageMatch[1]) {
+                return { imageUrl: markdownImageMatch[1], base64Image: null };
+            }
+            
+            // 6. 尝试提取Markdown链接格式的图片URL（如[点击下载](url)）
+            const markdownLinkMatch = cleanedContent.match(/\[.*?\]\((https?:\/\/filesystem\.site\/[^)]+\.(jpg|jpeg|png|gif|webp)[^)]*)\)/i);
+            if (markdownLinkMatch && markdownLinkMatch[1]) {
+                return { imageUrl: markdownLinkMatch[1], base64Image: null };
+            }
+            
+            // 7. 尝试直接提取URL（支持http/https协议和常见图片格式）
+            const urlMatch = cleanedContent.match(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/i);
+            if (urlMatch && urlMatch[0]) {
+                return { imageUrl: urlMatch[0], base64Image: null };
+            }
+            
+            // 8. 检查内容是否为有效的URL
+            if (isValidUrl(cleanedContent) && cleanedContent.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                return { imageUrl: cleanedContent, base64Image: null };
+            }
+            
+            // 9. 检查内容是否为JSON，尝试从JSON中提取URL或Base64
+            try {
+                const jsonData = JSON.parse(cleanedContent);
+                // 检查常见的图片URL字段
+                const possibleFields = ['image', 'url', 'image_url', 'result', 'output'];
+                for (const field of possibleFields) {
+                    if (jsonData[field]) {
+                        // 检查是否是Base64
+                        if (jsonData[field].startsWith('data:image/') && jsonData[field].includes('base64,')) {
+                            return { imageUrl: null, base64Image: jsonData[field] };
+                        }
+                        // 检查是否是URL
+                        if (isValidUrl(jsonData[field]) && jsonData[field].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                            return { imageUrl: jsonData[field], base64Image: null };
+                        }
+                    }
+                }
+                
+                // 检查image数组中的URL
+                if (jsonData.images && Array.isArray(jsonData.images)) {
+                    for (const imgData of jsonData.images) {
+                        // 检查是否是Base64
+                        if (typeof imgData === 'string' && imgData.startsWith('data:image/') && imgData.includes('base64,')) {
+                            return { imageUrl: null, base64Image: imgData };
+                        }
+                        // 检查是否是URL
+                        if (typeof imgData === 'string' && isValidUrl(imgData) && imgData.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
+                            return { imageUrl: imgData, base64Image: null };
+                        }
+                    }
+                }
+                
+                // 检查数组中的图片URL
+                if (Array.isArray(jsonData)) {
+                    for (const item of jsonData) {
+                        if (typeof item === 'string') {
+                            // 检查是否是Base64
+                            if (item.startsWith('data:image/') && item.includes('base64,')) {
+                                return { imageUrl: null, base64Image: item };
+                            }
+                            // 检查是否是URL
+                            if (isValidUrl(item) && item.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                                return { imageUrl: item, base64Image: null };
+                            }
+                        }
+                        if (typeof item === 'object' && item !== null) {
+                            for (const key in item) {
+                                if (typeof item[key] === 'string') {
+                                    // 检查是否是Base64
+                                    if (item[key].startsWith('data:image/') && item[key].includes('base64,')) {
+                                        return { imageUrl: null, base64Image: item[key] };
+                                    }
+                                    // 检查是否是URL
+                                    if (isValidUrl(item[key]) && item[key].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                                        return { imageUrl: item[key], base64Image: null };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                // 不是JSON格式，继续尝试其他方法
+            }
+            
+            // 10. 作为最后的尝试，在原始内容中搜索任何符合条件的URL或Base64
+            const rawBase64Match = content.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
+            if (rawBase64Match && rawBase64Match[0]) {
+                return { imageUrl: null, base64Image: rawBase64Match[0] };
+            }
+            
+            const rawUrlMatch = content.match(/(https?:\/\/[^`\s]+\.(jpg|jpeg|png|gif|webp))/i);
+            if (rawUrlMatch && rawUrlMatch[0]) {
+                return { imageUrl: rawUrlMatch[0], base64Image: null };
+            }
+            
+            return { imageUrl: null, base64Image: null };
+        }
+
+        // 验证URL有效性
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // 更新处理进度
+        function updateProgress(percent) {
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = `${percent}%`;
+        }
+
+        // 下载图片功能（替换了原有的复制图片功能）
+        downloadBtn.addEventListener('click', async () => {
+            try {
+                // 显示加载状态
+                const originalText = downloadBtn.innerHTML;
+                downloadBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> 下载中...';
+                downloadBtn.disabled = true;
+
+                // 获取图片源
+                let imageSrc = resultImage.src;
+                
+                // 生成文件名
+                const timestamp = new Date().getTime();
+                let extension = 'png';
+                if (imageSrc.includes('data:image/jpeg') || imageSrc.includes('.jpg') || imageSrc.includes('.jpeg')) {
+                    extension = 'jpg';
+                } else if (imageSrc.includes('data:image/webp') || imageSrc.includes('.webp')) {
+                    extension = 'webp';
+                }
+                const filename = `pattern_result_${timestamp}.${extension}`;
+
+                // 处理不同类型的图片源
+                if (imageSrc.startsWith('data:')) {
+                    // Base64格式图片直接下载
+                    const link = document.createElement('a');
+                    link.href = imageSrc;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else if (imageSrc.startsWith('http')) {
+                    // 网络图片，尝试使用CORS代理解决跨域问题
+                    try {
+                        // 先尝试直接下载
+                        let response = await fetch(imageSrc);
+                        
+                        // 如果直接下载失败，尝试使用CORS代理
+                        if (!response.ok) {
+                            console.log('直接下载失败，尝试使用CORS代理...');
+                            response = await fetch(CORS_PROXY + imageSrc);
+                        }
+                        
+                        if (!response.ok) {
+                            throw new Error(`图片下载失败: ${response.statusText}`);
+                        }
+                        
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // 释放URL对象
+                        URL.revokeObjectURL(url);
+                    } catch (directError) {
+                        console.error('直接下载失败，尝试替代方法:', directError);
+                        
+                        // 替代方法：创建一个临时canvas来规避跨域限制
+                        try {
+                            const img = new Image();
+                            img.crossOrigin = "anonymous"; // 尝试匿名跨域访问
+                            
+                            await new Promise((resolve, reject) => {
+                                img.onload = resolve;
+                                img.onerror = reject;
+                                img.src = imageSrc + (imageSrc.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                            });
+                            
+                            // 创建canvas并绘制图片
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            
+                            // 将canvas内容转换为dataURL
+                            const dataUrl = canvas.toDataURL(`image/${extension}`);
+                            
+                            // 创建下载链接
+                            const link = document.createElement('a');
+                            link.href = dataUrl;
+                            link.download = filename;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        } catch (canvasError) {
+                            console.error('Canvas方法也失败:', canvasError);
+                            // 最后的备选方案：指导用户手动下载
+                            throw new Error(`自动下载失败: ${directError.message}\n\n您可以右键点击图片选择"图片另存为"手动保存`);
+                        }
+                    }
+                } else {
+                    // 其他情况（如本地文件）
+                    const link = document.createElement('a');
+                    link.href = imageSrc;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+                
+                // 显示下载成功提示
+                downloadBtn.innerHTML = '<i class="fa fa-check mr-1"></i> 已下载';
+                downloadBtn.classList.add('bg-green-600');
+                
+                setTimeout(() => {
+                    downloadBtn.innerHTML = originalText;
+                    downloadBtn.classList.remove('bg-green-600');
+                    downloadBtn.disabled = false;
+                }, 2000);
+            } catch (err) {
+                console.error('图片下载失败:', err);
+                downloadBtn.innerHTML = '<i class="fa fa-download mr-1"></i> 下载图片';
+                downloadBtn.disabled = false;
+                
+                // 提供手动下载选项作为备选
+                showError(`下载图片失败: ${err.message}`);
+            }
+        });
+
+        // 显示错误信息
+        function showError(message) {
+            // 处理长错误信息，添加换行
+            errorMessage.innerHTML = message.replace(/\n/g, '<br>');
+            errorContainer.classList.remove('hidden');
+            // 确保状态容器可见
+            statusContainer.classList.remove('hidden');
+        }
+
+        // 重置处理状态 - 关键修复：不再自动隐藏状态容器
+        function resetProcessingState() {
+            // 不要立即隐藏状态容器，而是让错误处理来管理
+            updateProgress(0);
+            // 验证按钮状态
+            validateProcessButton();
+            reprocessBtn.disabled = false;
+        }
+
+        // 添加到历史记录 - 移除了使用和复制按钮，只保留点击放大功能
+        function addToHistory(imageUrl) {
+            // 检查是否有"暂无历史记录"占位符
+            const placeholder = historyContainer.querySelector('.text-center.text-gray-500');
+            if (placeholder) {
+                historyContainer.removeChild(placeholder);
+            }
+            
+            // 创建历史记录项
+            const historyItem = document.createElement('div');
+            historyItem.className = 'relative overflow-hidden rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-custom';
+            
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = '历史处理结果';
+            img.className = 'w-full h-24 object-cover cursor-zoom-in';
+            img.title = '点击放大查看';
+            
+            // 为历史记录图片添加点击放大事件
+            img.addEventListener('click', () => {
+                openImageZoom(imageUrl);
+            });
+            
+            historyItem.appendChild(img);
+            
+            // 添加到历史记录容器（插入到最前面）
+            historyContainer.insertBefore(historyItem, historyContainer.firstChild);
+            
+            // 限制历史记录数量为8条
+            if (historyContainer.children.length > 8) {
+                historyContainer.removeChild(historyContainer.lastChild);
+            }
+        }
+
+        // 图片放大查看功能
+        function openImageZoom(imageSrc) {
+            zoomImage.src = imageSrc;
+            imageZoom.classList.add('active');
+            document.body.style.overflow = 'hidden'; // 防止背景滚动
+        }
+
+        // 关闭图片放大查看
+        function closeImageZoom() {
+            imageZoom.classList.remove('active');
+            document.body.style.overflow = ''; // 恢复背景滚动
+        }
+
+        // 为图片添加点击放大事件
+        imagePreview.addEventListener('click', () => {
+            if (imagePreview.src) {
+                openImageZoom(imagePreview.src);
+            }
+        });
+
+        resultImage.addEventListener('click', () => {
+            if (resultImage.src) {
+                openImageZoom(resultImage.src);
+            }
+        });
+
+        // 关闭按钮事件
+        closeZoom.addEventListener('click', closeImageZoom);
+
+        // 点击背景关闭放大查看
+        imageZoom.addEventListener('click', (e) => {
+            if (e.target === imageZoom) {
+                closeImageZoom();
+            }
+        });
+
+        // ESC键关闭放大查看
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && imageZoom.classList.contains('active')) {
+                closeImageZoom();
+            }
+        });
+
+        // 页面卸载时清除计时器
+        window.addEventListener('beforeunload', () => {
+            if (cooldownTimer) clearInterval(cooldownTimer);
+            if (paintingTimer) clearInterval(paintingTimer);
+        });
+    </script>
+</body>
+</html>
