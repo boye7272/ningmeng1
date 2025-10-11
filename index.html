@@ -177,7 +177,7 @@
                 <i class="fa fa-exclamation-circle"></i>
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">卡密类型不匹配</h3>
-            <p class="text-gray-600 mb-6">请更换0.2一次卡密</p>
+            <p class="text-gray-600 mb-6">请您联系boye拿“通用处理”、“高清放大”专用卡密</p>
             <div class="flex justify-center">
                 <button class="modal-close bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-custom">
                     确定
@@ -247,7 +247,7 @@
                             <!-- 新增：二维码和购买提示 -->
                             <div class="w-full md:w-1/3 flex flex-col items-center justify-center p-2 border border-gray-100 rounded-lg bg-gray-50">
                                 <!-- 二维码图片 -->
-                                <img src="https://imgse.com/content/images/users/pGexmj/av_1757788180.png" alt="购买卡密二维码" class="w-24 h-24 object-contain mb-2">
+                                <img src="https://m.qpic.cn/psc?/V11z9ZOl3v28M2/TmEUgtj9EK6.7V8ajmQrENg2E8HPcKxgQ*Bw9U0Bgs8wBXQY6SQPZIf4dF*i50jrLB.vIOiO2YAdW0S*kxImzYkrsGtqh6wjhWIB44RFvw8!/b&ek=1&kp=1&pt=0&bo=3APzAwAAAAABFx8!&tl=1&su=0142541602&vuin=2224320441&tm=1760191200&dis_t=1760194319&dis_k=5f75e09424592bf2aaf5e2ef13858208#sce=12-1-1&rf=v1_ht5_qz_3.4.0_001_idc_b-4-0" alt="购买卡密二维码" class="w-24 h-24 object-contain mb-2">
                                 <!-- 提示语 -->
                                 <p class="text-xs text-gray-700 text-center">扫码购买卡密<br>生图消耗0.3￥一张</p>
                             </div>
@@ -263,13 +263,13 @@
                     <!-- 修改：将处理方式改为一排显示 -->
                     <div class="flex flex-wrap gap-4" id="instructions-container">
                         <!-- 指令选项1 - 循环图 -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="repeat" data-model="nano-banana-vip">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="repeat" data-model="gemini-2.5-flash-image-vip">
                             <h4 class="font-medium text-gray-800 mb-2">循环图</h4>
                             <p class="text-sm text-gray-600">将图案处理为四方连续的循环图案，适合大面积印花使用，图案可无缝拼接。</p>
                         </div>
                         
                         <!-- 指令选项2 - 定位花 -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="position" data-model="nano-banana-vip">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="position" data-model="gemini-2.5-flash-image-vip">
                             <h4 class="font-medium text-gray-800 mb-2">定位花</h4>
                             <p class="text-sm text-gray-600">精确定位图案主体，优化细节展示，适合需要突出主体图案的定位印花。</p>
                         </div>
@@ -317,7 +317,7 @@
                         </div>
 
                         <!-- 新增指令选项4 - 进一步处理-->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-model="nano-banana-vip">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-model="gemini-2.5-flash-image-vip">
                             <h4 class="font-medium text-gray-800 mb-2">进一步处理</h4>
                             <p class="text-sm text-gray-600">换背景、去水印、去绣花、换风格(3D,刺绣,水彩等）、花型图案换色、服装换色换花型、模特换装试衣等都可以在这个处理方式实现</p>
                             <!-- 自定义指令输入框 -->
@@ -502,7 +502,7 @@
         const ratioOptions = document.querySelectorAll('.ratio-option');
         const ratioRequired = document.getElementById('ratio-required'); // 新增：比例选择提示
         let selectedInstruction = 'repeat';
-        let selectedModel = 'nano-banana-vip';
+        let selectedModel = 'gemini-2.5-flash-image-vip';
         let selectedStyle = []; // 改为数组，支持多选
         let selectedRatio = null; // 初始无选择
         let customInstruction = ''; // 新增：存储自定义指令
@@ -565,25 +565,25 @@
 
         // 五种处理指令的详细描述（新增了高清放大）
         const instructionDetails = {
-            repeat: `指令：请处理这张图片，提取衣服的图案并铺开
+            repeat: `指令：把衣服的印花图案平铺开
 要求：
-1. 去掉褶皱，重绘平整
+1. 保持图案大小、位置、排布不变
 2. 校正图案，还原出图案平整的样子
 3. 把不完整的图案绘制完整
 4. 不要改变图案的颜色和风格
-5. 保持图案大小和画布的比例不变
+5. 去掉褶皱，重绘平整
 6. 做成印刷用的四方无缝循环图案
 
 输出格式：
 仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`,
             
-            position: `指令：请处理这张图片，提取衣服的图案
+            position: `指令：把衣服的印花图案平铺开
 要求：
-1. 去掉褶皱
-2. 重绘平整
-3. 校正图案，还原出图案平整的样子
-4. 缺失的图案向外补充完整
-5. 不要改变图案的颜色和风格
+1. 保持图案大小、位置、排布不变
+2. 校正图案，还原出图案平整的样子
+3. 把不完整的图案绘制完整
+4. 不要改变图案的颜色和风格
+5. 去掉褶皱，重绘平整
 6. 优化图案主体定位，突出主体展示，适合定位印花使用
 
 输出格式：
@@ -1158,7 +1158,7 @@
                 // 读取图片并转换为base64
                 const base64Image = await convertImageToBase64(imagePreview.src);
                 updateProgress(30);
-                statusMessage.textContent = '正在发送请求...';
+                statusMessage.textContent = '正在分析图片内容...';
 
                 // 构建指令文本，根据选择动态添加风格和比例参数
                 let instructionText = instructionDetails[selectedInstruction] || instructionDetails.repeat;
@@ -1279,6 +1279,20 @@
                 statusContainer.classList.remove('hidden');
                 statusMessage.textContent = '处理出错';
                 updateProgress(0);
+                
+                // 特殊处理：高清放大处理出现"body stream already read"错误
+                if (selectedInstruction === 'hd-zoom' && 
+                    error.message.includes('Failed to execute \'text\' on \'Response') && 
+                    error.message.includes('body stream already read')) {
+                    // 显示卡密提示弹窗
+                    modals.changeToken.classList.add('active');
+                    // 清空密码输入
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    // 禁用处理按钮
+                    processBtn.disabled = true;
+                    return;
+                }
                 
                 // 关键修复：检查是否是401 Unauthorized错误
                 if (error.message.includes('Unauthorized') && error.message.includes('401')) {
@@ -1474,6 +1488,22 @@
                 
             } catch (error) {
                 console.error('检查处理结果时出错:', error);
+                
+                // 特殊处理：高清放大处理出现"body stream already read"错误
+                if (selectedInstruction === 'hd-zoom' && 
+                    error.message.includes('Failed to execute \'text\' on \'Response') && 
+                    error.message.includes('body stream already read')) {
+                    // 显示卡密提示弹窗
+                    modals.changeToken.classList.add('active');
+                    // 清空密码输入
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    // 禁用处理按钮
+                    processBtn.disabled = true;
+                    // 重置状态
+                    statusContainer.classList.add('hidden');
+                    return;
+                }
                 
                 // 关键修复：检查是否是401 Unauthorized错误
                 if (error.message.includes('Unauthorized') && error.message.includes('401')) {
