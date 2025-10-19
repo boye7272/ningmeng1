@@ -177,7 +177,7 @@
                 <i class="fa fa-exclamation-circle"></i>
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">卡密类型不匹配</h3>
-            <p class="text-gray-600 mb-6">请您联系boye拿“通用处理”、“高清放大”专用卡密</p>
+            <p class="text-gray-600 mb-6">请您联系boye拿“通用处理”专用卡密</p>
             <div class="flex justify-center">
                 <button class="modal-close bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-custom">
                     确定
@@ -326,12 +326,6 @@
                                 <textarea id="custom-instruction" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-primary focus:border-primary transition-custom" placeholder="例如：提取花卉图案，将背景换成白色/提取花卉图案，去除绣花图案"></textarea>
                                 <p id="instruction-required" class="mt-1 text-xs text-red-500 hidden">请输入处理指令</p>
                             </div>
-                        </div>
-
-                        <!-- 新增指令选项5 - 高清放大 -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="hd-zoom" data-model="gemini-2.5-flash-image-hd">
-                            <h4 class="font-medium text-gray-800 mb-2">高清放大</h4>
-                            <p class="text-sm text-gray-600">将图片高清放大，增强图案细节，同时保持原有风格和色彩不变，适合需要高质量大图的场景。</p>
                         </div>
                     </div>
                 </div>
@@ -563,7 +557,7 @@
         // 新增：添加一个简单的CORS代理，用于解决跨域问题
         const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 
-        // 五种处理指令的详细描述（新增了高清放大）
+        // 四种处理指令的详细描述（已移除高清放大）
         const instructionDetails = {
             repeat: `指令：把衣服的印花图案平铺开
 要求：
@@ -607,13 +601,7 @@
             advanced: `{customInstruction}
 
 输出格式：
-仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`,
-
-            // 新增：高清放大的指令
-            "hd-zoom": `重绘这张图片，根据图案风格增强细节，细节笔触要流畅干净，降噪并保持颜色不变
-
-输出格式：
-仅返回一个直接可访问的图片URL，格式为JPG或PNG，不添加任何其他文字或说明。`
+仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`
         };
 
         // 初始状态：处理按钮不可用
@@ -665,8 +653,8 @@
                 selectedInstruction = option.getAttribute('data-instruction');
                 selectedModel = option.getAttribute('data-model');
                 
-                // 如果选择的是循环图、定位花或高清放大，取消矢量风格的比例选择和自定义指令
-                if (selectedInstruction === 'repeat' || selectedInstruction === 'position' || selectedInstruction === 'hd-zoom') {
+                // 如果选择的是循环图或定位花，取消矢量风格的比例选择和自定义指令
+                if (selectedInstruction === 'repeat' || selectedInstruction === 'position') {
                     // 取消所有风格选择
                     styleOptions.forEach(opt => opt.classList.remove('option-active'));
                     selectedStyle = [];
@@ -790,8 +778,6 @@
             
             // 新增：如果选择了进一步处理，必须输入指令
             const advancedValid = selectedInstruction !== 'advanced' || (!!customInstruction && customInstruction.length >= 5);
-            
-            // 高清放大不需要额外条件
             
             // 更新按钮状态
             processBtn.disabled = !(hasPassword && hasImage && vectorStyleValid && advancedValid);
@@ -1280,20 +1266,6 @@
                 statusMessage.textContent = '处理出错';
                 updateProgress(0);
                 
-                // 特殊处理：高清放大处理出现"body stream already read"错误
-                if (selectedInstruction === 'hd-zoom' && 
-                    error.message.includes('Failed to execute \'text\' on \'Response') && 
-                    error.message.includes('body stream already read')) {
-                    // 显示卡密提示弹窗
-                    modals.changeToken.classList.add('active');
-                    // 清空密码输入
-                    accessPasswordInput.value = '';
-                    ACCESS_PASSWORD = '';
-                    // 禁用处理按钮
-                    processBtn.disabled = true;
-                    return;
-                }
-                
                 // 关键修复：检查是否是401 Unauthorized错误
                 if (error.message.includes('Unauthorized') && error.message.includes('401')) {
                     // 显示次数用完弹窗
@@ -1488,22 +1460,6 @@
                 
             } catch (error) {
                 console.error('检查处理结果时出错:', error);
-                
-                // 特殊处理：高清放大处理出现"body stream already read"错误
-                if (selectedInstruction === 'hd-zoom' && 
-                    error.message.includes('Failed to execute \'text\' on \'Response') && 
-                    error.message.includes('body stream already read')) {
-                    // 显示卡密提示弹窗
-                    modals.changeToken.classList.add('active');
-                    // 清空密码输入
-                    accessPasswordInput.value = '';
-                    ACCESS_PASSWORD = '';
-                    // 禁用处理按钮
-                    processBtn.disabled = true;
-                    // 重置状态
-                    statusContainer.classList.add('hidden');
-                    return;
-                }
                 
                 // 关键修复：检查是否是401 Unauthorized错误
                 if (error.message.includes('Unauthorized') && error.message.includes('401')) {
