@@ -263,13 +263,13 @@
                     <!-- 修改：将处理方式改为一排显示 -->
                     <div class="flex flex-wrap gap-4" id="instructions-container">
                         <!-- 指令选项1 - 循环图 -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="repeat" data-model="gemini-2.5-flash-image-vip">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="repeat" data-model="nano-banana-vip">
                             <h4 class="font-medium text-gray-800 mb-2">循环图</h4>
                             <p class="text-sm text-gray-600">将图案处理为四方连续的循环图案，适合大面积印花使用，图案可无缝拼接。</p>
                         </div>
                         
                         <!-- 指令选项2 - 定位花 -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="position" data-model="gemini-2.5-flash-image-vip">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom relative flex-1 min-w-[200px]" data-instruction="position" data-model="nano-banana-vip">
                             <h4 class="font-medium text-gray-800 mb-2">定位花</h4>
                             <p class="text-sm text-gray-600">精确定位图案主体，优化细节展示，适合需要突出主体图案的定位印花。</p>
                         </div>
@@ -312,7 +312,7 @@
                         </div>
 
                         <!-- 新增指令选项4 - 进一步处理-->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-model="gemini-2.5-flash-image-vip">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-model="nano-banana-vip">
                             <h4 class="font-medium text-gray-800 mb-2">进一步处理</h4>
                             <p class="text-sm text-gray-600">换背景、去水印、去绣花、换风格(3D,刺绣,水彩等）、花型图案换色、服装换色换花型、模特换装试衣等都可以在这个处理方式实现</p>
                             <!-- 自定义指令输入框 -->
@@ -568,7 +568,7 @@
         const ratioOptions = document.querySelectorAll('.ratio-option');
         const ratioRequired = document.getElementById('ratio-required');
         let selectedInstruction = 'repeat';
-        let selectedModel = 'gemini-2.5-flash-image-vip';
+        let selectedModel = 'nano-banana-vip';
         let selectedStyle = [];
         let selectedRatio = null;
         let customInstruction = '';
