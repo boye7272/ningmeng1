@@ -328,7 +328,7 @@
                         <!-- 新增指令选项5 - 图案提取（选比例） -->
                         <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="ratio" data-model="gemini-2.5-flash-image-vip">
                             <h4 class="font-medium text-gray-800 mb-2">图案提取（选比例）</h4>
-                            <p class="text-sm text-gray-600">可选择输出比例和循环或定位类型，适用于需要特定比例输出的场景。翻墙时不可用，记得断开VPN再使用。</p>
+                            <p class="text-sm text-gray-600">可选择输出比例和循环或定位类型，适用于需要特定比例输出的场景。翻墙时不可用，记得断开VPN再使用</p>
                             
                             <!-- 提示词类型选择 -->
                             <div id="ratio-instruction-options" class="mt-4">
@@ -1765,6 +1765,29 @@
                     },
                     body: JSON.stringify(payload)
                 });
+                
+                // 新增：处理401错误
+                if (response.status === 401) {
+                    // 显示使用次数已用完的弹窗
+                    modals.usageExhausted.classList.add('active');
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    processBtn.disabled = true;
+                    statusContainer.classList.add('hidden');
+                    // 抛出错误以便上层处理
+                    throw new Error(`API请求失败: Unauthorized（状态码：401）`);
+                }
+                
+                if (response.status === 503) {
+                    if (await response.text().includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                        modals.changeToken.classList.add('active');
+                        accessPasswordInput.value = '';
+                        ACCESS_PASSWORD = '';
+                        processBtn.disabled = true;
+                        statusContainer.classList.add('hidden');
+                        throw new Error(`API请求失败: Service Unavailable（状态码：503）`);
+                    }
+                }
                 
                 if (!response.ok) {
                     let errorDetails = await response.text();
