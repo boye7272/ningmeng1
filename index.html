@@ -320,6 +320,22 @@
                                     </div>
                                     <p id="new-ratio-required" class="mt-1 text-xs text-red-500 hidden">请选择输出比例</p>
                                 </div>
+                                
+                                <!-- 新增：画质选择 -->
+                                <div class="mt-3">
+                                    <p class="text-sm text-gray-600 mb-1">画质选择：</p>
+                                    <div class="flex gap-2">
+                                        <button type="button" id="new-ratio-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
+                                            1K
+                                        </button>
+                                        <button type="button" id="new-ratio-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
+                                            2K
+                                        </button>
+                                        <button type="button" id="new-ratio-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
+                                            4K
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -369,6 +385,22 @@
                                 <p class="text-sm text-gray-600 mb-1">请输入处理指令：</p>
                                 <textarea id="custom-instruction" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-primary focus:border-primary transition-custom" placeholder="例如：例如:提取花卉图案，将背景换成白色/提取花卉图案，去除绣花图案/把图一衣服上的图案换成图二的图案。"></textarea>
                                 <p id="instruction-required" class="mt-1 text-xs text-red-500 hidden">请输入处理指令</p>
+                                
+                                <!-- 新增：画质选择 -->
+                                <div class="mt-3">
+                                    <p class="text-sm text-gray-600 mb-1">画质选择：</p>
+                                    <div class="flex gap-2">
+                                        <button type="button" id="advanced-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
+                                            1K
+                                        </button>
+                                        <button type="button" id="advanced-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
+                                            2K
+                                        </button>
+                                        <button type="button" id="advanced-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
+                                            4K
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -686,6 +718,9 @@
         const newRatioOptions = document.querySelectorAll('.new-ratio-option');
         const newRatioRequired = document.getElementById('new-ratio-required');
         
+        // 新增：画质选择相关元素
+        const qualityOptions = document.querySelectorAll('.quality-option');
+        
         let selectedInstruction = 'new-ratio';
         let selectedModel = 'gemini-2.5-flash-image-vip';
         let selectedStyle = [];
@@ -697,6 +732,9 @@
         // 新增：新图案提取（选比例）相关变量
         let selectedInstructionType = 'repeat'; // 'repeat' 或 'position'
         let selectedNewRatio = '1x1'; // 默认选择1:1
+        
+        // 新增：画质选择变量
+        let selectedQuality = '1K'; // 默认选择1K
 
         // 图片上传区域相关元素
         const singleImageContainer = document.getElementById('single-image-container');
@@ -871,6 +909,13 @@
             }
         };
 
+        // 画质与模型映射
+        const qualityModelMap = {
+            '1K': 'gemini-3-pro-image-preview',
+            '2K': 'gemini-3-pro-image-preview-2k',
+            '4K': 'gemini-3-pro-image-preview-4k'
+        };
+
         // 初始状态：处理按钮不可用
         processBtn.disabled = true;
 
@@ -915,7 +960,6 @@
                 option.classList.add('instruction-active');
                 // 记录选中的指令和模型
                 selectedInstruction = option.getAttribute('data-instruction');
-                selectedModel = option.getAttribute('data-model');
                 
                 // 根据选择的指令切换图片上传区域
                 if (selectedInstruction === 'advanced') {
@@ -945,6 +989,9 @@
                     
                     // 重置新图案提取（选比例）选项
                     newRatioRequired.classList.add('hidden');
+                    
+                    // 更新模型为当前画质对应的模型
+                    selectedModel = qualityModelMap[selectedQuality];
                 } else if (selectedInstruction === 'vector') {
                     // 矢量风格图案指令
                     customInstructionInput.value = '';
@@ -953,6 +1000,8 @@
                     instructionRequired.classList.add('hidden');
                     
                     ratioRequired.classList.add('hidden');
+                    
+                    selectedModel = 'gpt-image-1';
                 } else if (selectedInstruction === 'advanced') {
                     // 进一步处理指令
                     styleOptions.forEach(opt => opt.classList.remove('option-active'));
@@ -962,6 +1011,9 @@
                     selectedRatio = null;
                     
                     ratioRequired.classList.add('hidden');
+                    
+                    // 更新模型为当前画质对应的模型
+                    selectedModel = qualityModelMap[selectedQuality];
                     
                     setTimeout(() => {
                         customInstructionInput.focus();
@@ -981,10 +1033,32 @@
                     instructionRequired.classList.add('hidden');
                     
                     sizeRequired.classList.add('hidden');
+                    
+                    selectedModel = 'gemini-2.5-flash-image-vip';
                 }
                 
                 // 验证按钮状态
                 validateProcessButton();
+            });
+        });
+
+        // 新增：画质选择逻辑
+        qualityOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const quality = option.getAttribute('data-quality');
+                const model = option.getAttribute('data-model');
+                
+                // 移除同组画质按钮的活跃状态
+                const parentContainer = option.closest('.instruction-option');
+                const qualityOptionsInGroup = parentContainer.querySelectorAll('.quality-option');
+                qualityOptionsInGroup.forEach(opt => opt.classList.remove('option-active'));
+                
+                // 设置当前按钮为活跃状态
+                option.classList.add('option-active');
+                
+                // 更新选中的画质和模型
+                selectedQuality = quality;
+                selectedModel = model;
             });
         });
 
