@@ -338,7 +338,7 @@
                         </div>
 
                         <!-- 新增指令选项3 - 矢量风格图案 -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="vector" data-model="gpt-image-1">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="vector" data-model="gpt-4o-image">
                             <h4 class="font-medium text-gray-800 mb-2">矢量风格图案</h4>
                             <p class="text-sm text-gray-600">比如球服、徽章、logo等图案的提取，可以选择矢量风格输出。按截图比例选择输出比例。出图时间会稍慢一些、图案更清晰！大概3分钟出一张图。不适合花卉等密集花型提取</p>
                             
@@ -906,7 +906,7 @@
                     
                     ratioRequired.classList.add('hidden');
                     
-                    selectedModel = 'gpt-image-1';
+                    selectedModel = 'gpt-4o-image';
                 } else if (selectedInstruction === 'advanced') {
                     // 进一步处理指令
                     styleOptions.forEach(opt => opt.classList.remove('option-active'));
@@ -1740,7 +1740,7 @@
                 
                 if (error.message.includes('Service Unavailable') && 
                     error.message.includes('503') && 
-                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-4o-image 均无可用渠道，请更换分组尝试')) {
                     modals.changeToken.classList.add('active');
                     accessPasswordInput.value = '';
                     ACCESS_PASSWORD = '';
@@ -1814,7 +1814,7 @@
                 }
                 
                 if (response.status === 503) {
-                    if (await response.text().includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                    if (await response.text().includes('所有令牌分组 Gemini原价 下对于模型 gpt-4o-image 均无可用渠道，请更换分组尝试')) {
                         modals.changeToken.classList.add('active');
                         accessPasswordInput.value = '';
                         ACCESS_PASSWORD = '';
@@ -1926,7 +1926,7 @@
                 
                 if (error.message.includes('Service Unavailable') && 
                     error.message.includes('503') && 
-                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-4o-image 均无可用渠道，请更换分组尝试')) {
                     modals.changeToken.classList.add('active');
                     accessPasswordInput.value = '';
                     ACCESS_PASSWORD = '';
@@ -2021,7 +2021,7 @@
                 
                 if (response.status === 503) {
                     const errorDetails = await response.text();
-                    if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                    if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-4o-image 均无可用渠道，请更换分组尝试')) {
                         throw new Error(`API请求失败: Service Unavailable（状态码：503）\n${errorDetails}`);
                     }
                 }
@@ -2478,6 +2478,3 @@
     </script>
 </body>
 </html>
-
-
-
