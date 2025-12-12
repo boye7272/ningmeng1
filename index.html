@@ -2112,127 +2112,164 @@
         }
 
         // 增强的图片数据提取函数
-        function extractImageData(content) {
-            // 1. 移除所有绘画状态信息
-            let cleanedContent = content.replace(/^>.*?(🖌️|正在绘画).*?(?=\n|$)/gmi, '').trim();
-            
-            // 2. 移除所有可能的状态提示文本
-            const statusPatterns = [
-                /正在生成图片.../gi,
-                /正在处理您的请求.../gi,
-                /请稍候.../gi,
-                /绘画中.../gi,
-                /仍在处理.../gi,
-                /继续绘画.../gi
-            ];
-            
-            statusPatterns.forEach(pattern => {
-                cleanedContent = cleanedContent.replace(pattern, '').trim();
-            });
-            
-            // 3. 移除所有可能的代码块标记
-            cleanedContent = cleanedContent
-                .replace(/`/g, '')
-                .replace(/^json\s*/i, '')
-                .replace(/^```.*?```$/gs, '')
-                .replace(/^<ImageHere>$/, '');
-            
-            // 4. 尝试提取Base64编码
-            const base64Match = cleanedContent.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
-            if (base64Match && base64Match[0]) {
-                return { imageUrl: null, base64Image: base64Match[0] };
-            }
-            
-            // 5. 尝试从Markdown图片格式中提取URL
-            const markdownImageMatch = cleanedContent.match(/!\[.*?\]\((https?:\/\/[^\)]+\.(jpg|jpeg|png|gif|webp))\)/i);
-            if (markdownImageMatch && markdownImageMatch[1]) {
-                return { imageUrl: markdownImageMatch[1], base64Image: null };
-            }
-            
-            // 6. 尝试提取Markdown链接格式的图片URL
-            const markdownLinkMatch = cleanedContent.match(/\[.*?\]\((https?:\/\/filesystem\.site\/[^)]+\.(jpg|jpeg|png|gif|webp)[^)]*)\)/i);
-            if (markdownLinkMatch && markdownLinkMatch[1]) {
-                return { imageUrl: markdownLinkMatch[1], base64Image: null };
-            }
-            
-            // 7. 尝试直接提取URL
-            const urlMatch = cleanedContent.match(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/i);
-            if (urlMatch && urlMatch[0]) {
-                return { imageUrl: urlMatch[0], base64Image: null };
-            }
-            
-            // 8. 检查内容是否为有效的URL
-            if (isValidUrl(cleanedContent) && cleanedContent.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                return { imageUrl: cleanedContent, base64Image: null };
-            }
-            
-            // 9. 检查内容是否为JSON
-            try {
-                const jsonData = JSON.parse(cleanedContent);
-                const possibleFields = ['image', 'url', 'image_url', 'result', 'output'];
-                for (const field of possibleFields) {
-                    if (jsonData[field]) {
-                        if (jsonData[field].startsWith('data:image/') && jsonData[field].includes('base64,')) {
-                            return { imageUrl: null, base64Image: jsonData[field] };
-                        }
-                        if (isValidUrl(jsonData[field]) && jsonData[field].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                            return { imageUrl: jsonData[field], base64Image: null };
-                        }
-                    }
+function extractImageData(content) {
+    // 1. 首先尝试提取Base64数据（改进正则表达式）
+    const base64Patterns = [
+        // 模式1: 标准Base64格式
+        /data:image\/(png|jpeg|jpg|gif|webp);base64,([a-zA-Z0-9+/=\s]+)/i,
+        // 模式2: 可能包含换行的Base64
+        /data:image\/[^;]+;base64,([a-zA-Z0-9+/=\s]+)/i,
+        // 模式3: 没有data:image前缀的Base64
+        /(?:^|\s)([a-zA-Z0-9+/]{100,}={0,2})(?:\s|$)/,
+    ];
+    
+    for (const pattern of base64Patterns) {
+        const match = content.match(pattern);
+        if (match && match[0]) {
+            let base64Data = match[0];
+            // 如果是完整的data:image格式
+            if (base64Data.startsWith('data:image')) {
+                // 移除可能的多余字符和空白
+                base64Data = base64Data.replace(/\s/g, '');
+                // 检查Base64长度是否合理（至少几百个字符）
+                if (base64Data.length > 500) {
+                    return { imageUrl: null, base64Image: base64Data };
                 }
-                
-                if (jsonData.images && Array.isArray(jsonData.images)) {
-                    for (const imgData of jsonData.images) {
-                        if (typeof imgData === 'string' && imgData.startsWith('data:image/') && imgData.includes('base64,')) {
-                            return { imageUrl: null, base64Image: imgData };
-                        }
-                        if (typeof imgData === 'string' && isValidUrl(imgData) && imgData.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
-                            return { imageUrl: imgData, base64Image: null };
-                        }
-                    }
+            } else if (match[1] && match[1].length > 500) {
+                // 对于纯Base64，尝试构建完整格式
+                // 根据常见格式猜测MIME类型
+                let mimeType = 'image/png';
+                if (content.includes('jpeg') || content.includes('jpg')) {
+                    mimeType = 'image/jpeg';
+                } else if (content.includes('webp')) {
+                    mimeType = 'image/webp';
                 }
-                
-                if (Array.isArray(jsonData)) {
-                    for (const item of jsonData) {
-                        if (typeof item === 'string') {
-                            if (item.startsWith('data:image/') && item.includes('base64,')) {
-                                return { imageUrl: null, base64Image: item };
-                            }
-                            if (isValidUrl(item) && item.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                                return { imageUrl: item, base64Image: null };
-                            }
-                        }
-                        if (typeof item === 'object' && item !== null) {
-                            for (const key in item) {
-                                if (typeof item[key] === 'string') {
-                                    if (item[key].startsWith('data:image/') && item[key].includes('base64,')) {
-                                        return { imageUrl: null, base64Image: item[key] };
-                                    }
-                                    if (isValidUrl(item[key]) && item[key].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                                        return { imageUrl: item[key], base64Image: null };
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                // 不是JSON格式
+                const fullBase64 = `data:${mimeType};base64,${match[1].replace(/\s/g, '')}`;
+                return { imageUrl: null, base64Image: fullBase64 };
             }
-            
-            // 10. 作为最后的尝试，在原始内容中搜索
-            const rawBase64Match = content.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
-            if (rawBase64Match && rawBase64Match[0]) {
-                return { imageUrl: null, base64Image: rawBase64Match[0] };
-            }
-            
-            const rawUrlMatch = content.match(/(https?:\/\/[^`\s]+\.(jpg|jpeg|png|gif|webp))/i);
-            if (rawUrlMatch && rawUrlMatch[0]) {
-                return { imageUrl: rawUrlMatch[0], base64Image: null };
-            }
-            
-            return { imageUrl: null, base64Image: null };
         }
+    }
+    
+    // 2. 移除所有绘画状态信息
+    let cleanedContent = content.replace(/^>.*?(🖌️|正在绘画).*?(?=\n|$)/gmi, '').trim();
+    
+    // 3. 移除所有可能的状态提示文本
+    const statusPatterns = [
+        /正在生成图片.../gi,
+        /正在处理您的请求.../gi,
+        /请稍候.../gi,
+        /绘画中.../gi,
+        /仍在处理.../gi,
+        /继续绘画.../gi
+    ];
+    
+    statusPatterns.forEach(pattern => {
+        cleanedContent = cleanedContent.replace(pattern, '').trim();
+    });
+    
+    // 4. 移除所有可能的代码块标记
+    cleanedContent = cleanedContent
+        .replace(/`/g, '')
+        .replace(/^json\s*/i, '')
+        .replace(/^```.*?```$/gs, '')
+        .replace(/^<ImageHere>$/, '');
+    
+    // 5. 再次尝试提取Base64编码（从清理后的内容）
+    const base64Match = cleanedContent.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
+    if (base64Match && base64Match[0]) {
+        return { imageUrl: null, base64Image: base64Match[0] };
+    }
+    
+    // 6. 尝试从Markdown图片格式中提取URL
+    const markdownImageMatch = cleanedContent.match(/!\[.*?\]\((https?:\/\/[^\)]+\.(jpg|jpeg|png|gif|webp))\)/i);
+    if (markdownImageMatch && markdownImageMatch[1]) {
+        return { imageUrl: markdownImageMatch[1], base64Image: null };
+    }
+    
+    // 7. 尝试提取Markdown链接格式的图片URL
+    const markdownLinkMatch = cleanedContent.match(/\[.*?\]\((https?:\/\/filesystem\.site\/[^)]+\.(jpg|jpeg|png|gif|webp)[^)]*)\)/i);
+    if (markdownLinkMatch && markdownLinkMatch[1]) {
+        return { imageUrl: markdownLinkMatch[1], base64Image: null };
+    }
+    
+    // 8. 尝试直接提取URL
+    const urlMatch = cleanedContent.match(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/i);
+    if (urlMatch && urlMatch[0]) {
+        return { imageUrl: urlMatch[0], base64Image: null };
+    }
+    
+    // 9. 检查内容是否为有效的URL
+    if (isValidUrl(cleanedContent) && cleanedContent.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        return { imageUrl: cleanedContent, base64Image: null };
+    }
+    
+    // 10. 检查内容是否为JSON
+    try {
+        const jsonData = JSON.parse(cleanedContent);
+        const possibleFields = ['image', 'url', 'image_url', 'result', 'output'];
+        for (const field of possibleFields) {
+            if (jsonData[field]) {
+                if (jsonData[field].startsWith('data:image/') && jsonData[field].includes('base64,')) {
+                    return { imageUrl: null, base64Image: jsonData[field] };
+                }
+                if (isValidUrl(jsonData[field]) && jsonData[field].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                    return { imageUrl: jsonData[field], base64Image: null };
+                }
+            }
+        }
+        
+        if (jsonData.images && Array.isArray(jsonData.images)) {
+            for (const imgData of jsonData.images) {
+                if (typeof imgData === 'string' && imgData.startsWith('data:image/') && imgData.includes('base64,')) {
+                    return { imageUrl: null, base64Image: imgData };
+                }
+                if (typeof imgData === 'string' && isValidUrl(imgData) && imgData.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
+                    return { imageUrl: imgData, base64Image: null };
+                }
+            }
+        }
+        
+        if (Array.isArray(jsonData)) {
+            for (const item of jsonData) {
+                if (typeof item === 'string') {
+                    if (item.startsWith('data:image/') && item.includes('base64,')) {
+                        return { imageUrl: null, base64Image: item };
+                    }
+                    if (isValidUrl(item) && item.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                        return { imageUrl: item, base64Image: null };
+                    }
+                }
+                if (typeof item === 'object' && item !== null) {
+                    for (const key in item) {
+                        if (typeof item[key] === 'string') {
+                            if (item[key].startsWith('data:image/') && item[key].includes('base64,')) {
+                                return { imageUrl: null, base64Image: item[key] };
+                            }
+                            if (isValidUrl(item[key]) && item[key].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                                return { imageUrl: item[key], base64Image: null };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        // 不是JSON格式
+    }
+    
+    // 11. 作为最后的尝试，在原始内容中搜索
+    const rawBase64Match = content.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
+    if (rawBase64Match && rawBase64Match[0]) {
+        return { imageUrl: null, base64Image: rawBase64Match[0] };
+    }
+    
+    const rawUrlMatch = content.match(/(https?:\/\/[^`\s]+\.(jpg|jpeg|png|gif|webp))/i);
+    if (rawUrlMatch && rawUrlMatch[0]) {
+        return { imageUrl: rawUrlMatch[0], base64Image: null };
+    }
+    
+    return { imageUrl: null, base64Image: null };
+}
 
         // 验证URL有效性
         function isValidUrl(string) {
