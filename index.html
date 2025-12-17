@@ -202,6 +202,27 @@
         </div>
     </div>
 
+    <!-- 弹窗：通道更换通知 -->
+    <div id="channel-change-modal" class="modal active">
+        <div class="modal-content">
+            <div class="text-primary text-5xl mb-4">
+                <i class="fa fa-info-circle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">重要通知</h3>
+            <div class="text-gray-600 mb-6 text-left">
+                <p class="mb-2">由于稳定性问题更换了通道，成本大幅增加，现在需要<strong class="text-red-500">0.8￥一次</strong>。</p>
+                <p class="mb-2">原来的次数全部折算为0.8一次。</p>
+                <p class="mb-2">如果觉得贵（我自己都觉得很贵）联系充值微信退款。</p>
+                <p>给你造成不便表示抱歉！</p>
+            </div>
+            <div class="flex justify-center">
+                <button id="channel-change-confirm" class="modal-close bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-custom">
+                    知道了
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 图片悬浮查看器 -->
     <div id="image-zoom" class="image-zoom-container fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
         <button id="close-zoom" class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 transition-custom">
@@ -249,7 +270,7 @@
                                 <!-- 二维码图片 -->
                                 <img src="https://imgchr.com/content/images/users/pGzZQ0/av_1764286239.png" alt="购买卡密二维码" class="w-24 h-24 object-contain mb-2">
                                 <!-- 提示语 -->
-                                <p class="text-xs text-gray-700 text-center">扫码购买卡密<br>生图消耗0.5￥一张</p>
+                                <p class="text-xs text-gray-700 text-center">扫码购买卡密<br>生图消耗0.8￥一张</p>
                             </div>
                         </div>
                     </div>
@@ -263,7 +284,7 @@
                     <!-- 修改：将处理方式改为一排显示 -->
                     <div class="flex flex-wrap gap-4" id="instructions-container">
                         <!-- 新增：新图案提取（选比例） -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="new-ratio" data-model="gemini-3-pro-image-preview">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="new-ratio" data-model="gemini-3-pro-image-preview-vip">
                             <h4 class="font-medium text-gray-800 mb-2">新图案提取（选比例）</h4>
                             <p class="text-sm text-gray-600">将图案处理为四方连续的循环图案或定位花，适合大面积印花使用，可选择输出比例。</p>
                             
@@ -323,13 +344,13 @@
                                 <div class="mt-3">
                                     <p class="text-sm text-gray-600 mb-1">画质选择：</p>
                                     <div class="flex gap-2">
-                                        <button type="button" id="new-ratio-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
+                                        <button type="button" id="new-ratio-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview-vip">
                                             1K
                                         </button>
-                                        <button type="button" id="new-ratio-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
+                                        <button type="button" id="new-ratio-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k-vip">
                                             2K
                                         </button>
-                                        <button type="button" id="new-ratio-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
+                                        <button type="button" id="new-ratio-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k-vip">
                                             4K
                                         </button>
                                     </div>
@@ -375,7 +396,7 @@
                         </div>
 
                         <!-- 新增指令选项4 - 进一步处理-->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-model="gemini-3-pro-image-preview">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-model="gemini-3-pro-image-preview-vip">
                             <h4 class="font-medium text-gray-800 mb-2">进一步处理</h4>
                             <p class="text-sm text-gray-600">换背景、去水印、去绣花、换风格(3D,刺绣,水彩等）、花型图案换色、服装换色换花型、模特换装试衣等都可以在这个处理方式实现</p>
                             <!-- 自定义指令输入框 -->
@@ -388,13 +409,13 @@
                                 <div class="mt-3">
                                     <p class="text-sm text-gray-600 mb-1">画质选择：</p>
                                     <div class="flex gap-2">
-                                        <button type="button" id="advanced-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
+                                        <button type="button" id="advanced-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview-vip">
                                             1K
                                         </button>
-                                        <button type="button" id="advanced-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
+                                        <button type="button" id="advanced-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k-vip">
                                             2K
                                         </button>
-                                        <button type="button" id="advanced-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
+                                        <button type="button" id="advanced-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k-vip">
                                             4K
                                         </button>
                                     </div>
@@ -635,6 +656,8 @@
             changeToken: document.getElementById('change-token-modal'),
             imageTooLarge: document.getElementById('image-too-large-modal')
         };
+        // 添加通道更换通知弹窗
+        const channelChangeModal = document.getElementById('channel-change-modal');
         const modalCloseButtons = document.querySelectorAll('.modal-close');
 
         // 指令选择相关元素
@@ -657,7 +680,7 @@
         const qualityOptions = document.querySelectorAll('.quality-option');
         
         let selectedInstruction = 'new-ratio';
-        let selectedModel = 'gemini-2.5-flash-image-vip';
+        let selectedModel = 'gemini-3-pro-image-preview';
         let selectedStyle = [];
         let selectedRatio = null;
         let customInstruction = '';
@@ -816,9 +839,9 @@
 
         // 画质与模型映射
         const qualityModelMap = {
-            '1K': 'gemini-3-pro-image-preview',
-            '2K': 'gemini-3-pro-image-preview-2k',
-            '4K': 'gemini-3-pro-image-preview-4k'
+            '1K': 'gemini-3-pro-image-preview-vip',
+            '2K': 'gemini-3-pro-image-preview-2k-vip',
+            '4K': 'gemini-3-pro-image-preview-4k-vip'
         };
 
         // 初始状态：处理按钮不可用
@@ -830,6 +853,9 @@
                 Object.values(modals).forEach(modal => {
                     modal.classList.remove('active');
                 });
+                
+                // 关闭通道更换通知弹窗
+                channelChangeModal.classList.remove('active');
                 
                 if (button.closest('#usage-exhausted-modal') || button.closest('#change-token-modal')) {
                     accessPasswordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -854,6 +880,18 @@
                     }
                 }
             });
+        });
+
+        // 点击弹窗背景关闭 - 通道更换通知弹窗
+        channelChangeModal.addEventListener('click', (e) => {
+            if (e.target === channelChangeModal) {
+                channelChangeModal.classList.remove('active');
+            }
+        });
+
+        // 通道更换通知确认按钮
+        document.getElementById('channel-change-confirm').addEventListener('click', () => {
+            channelChangeModal.classList.remove('active');
         });
 
         // 指令选择逻辑
