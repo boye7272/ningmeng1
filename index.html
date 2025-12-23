@@ -1723,6 +1723,10 @@
                         currentMultiResultImages = result.imageUrls;
                         currentMultiSelectedIndex = 0;
                         
+                        // 清空之前的缩略图容器
+                        multiThumbnailContainer.classList.add('hidden');
+                        multiThumbnailContainer.innerHTML = '';
+                        
                         // 显示第一张图片
                         multiResultImage.onload = () => {
                             multiResultArea.classList.add('hidden');
@@ -1753,6 +1757,10 @@
                         currentResultImages = result.imageUrls;
                         currentSelectedIndex = 0;
                         
+                        // 清空之前的缩略图容器
+                        thumbnailContainer.classList.add('hidden');
+                        thumbnailContainer.innerHTML = '';
+                        
                         // 显示第一张图片
                         resultImage.onload = () => {
                             resultArea.classList.add('hidden');
@@ -1781,6 +1789,12 @@
                     }
                 } else {
                     // 只有单张图片返回
+                    // 清空之前的缩略图容器（修复问题1）
+                    thumbnailContainer.classList.add('hidden');
+                    thumbnailContainer.innerHTML = '';
+                    multiThumbnailContainer.classList.add('hidden');
+                    multiThumbnailContainer.innerHTML = '';
+                    
                     if (selectedInstruction === 'advanced') {
                         multiResultImage.onload = () => {
                             multiResultArea.classList.add('hidden');
@@ -2747,8 +2761,16 @@
             multiReprocessBtn.disabled = false;
         }
 
-        // 添加到历史记录
+        // 添加到历史记录 - 修复问题2：防止重复添加相同图片
         function addToHistory(imageUrl) {
+            // 检查是否已经有相同图片在历史记录中
+            const existingImages = historyContainer.querySelectorAll('img');
+            for (const img of existingImages) {
+                if (img.src === imageUrl) {
+                    return; // 如果已经存在，不重复添加
+                }
+            }
+            
             const placeholder = historyContainer.querySelector('.text-center.text-gray-500');
             if (placeholder) {
                 historyContainer.removeChild(placeholder);
