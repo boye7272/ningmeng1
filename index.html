@@ -131,6 +131,68 @@
                 font-size: 0.875rem;
                 z-index: 10;
             }
+            /* 缩略图容器样式 */
+            .thumbnail-container {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 80px;
+                background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+                display: flex;
+                gap: 8px;
+                padding: 8px;
+                z-index: 5;
+            }
+            .thumbnail-item {
+                flex: 1;
+                height: 100%;
+                border: 2px solid transparent;
+                border-radius: 4px;
+                overflow: hidden;
+                cursor: pointer;
+                opacity: 0.7;
+                transition: all 0.3s ease;
+            }
+            .thumbnail-item:hover {
+                opacity: 0.9;
+                transform: translateY(-2px);
+            }
+            .thumbnail-item.active {
+                border-color: #F59E0B;
+                opacity: 1;
+                box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+            }
+            .thumbnail-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            /* 结果区域样式调整 */
+            .result-image-wrapper {
+                position: relative;
+                width: 100%;
+                height: 256px; /* 固定高度 */
+                overflow: hidden;
+            }
+            .main-result-image {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                background-color: #f8f9fa;
+            }
+            .multi-result-image-wrapper {
+                position: relative;
+                width: 100%;
+                height: 256px; /* 固定高度 */
+                overflow: hidden;
+            }
+            .main-multi-result-image {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                background-color: #f8f9fa;
+            }
         }
     </style>
 </head>
@@ -451,7 +513,7 @@
                             </div>
                         </div>
 
-                        <!-- 处理结果区域 -->
+                        <!-- 处理结果区域 - 修改：支持多图显示 -->
                         <div class="flex-1">
                             <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
                                 <i class="fa fa-magic text-secondary mr-2"></i>处理结果
@@ -464,7 +526,17 @@
                                 <div id="format-conversion-notice" class="format-conversion-notice hidden">
                                     <i class="fa fa-spinner fa-spin mr-1"></i> 转换为PNG格式中...
                                 </div>
-                                <img id="result-image" class="max-w-full max-h-64 mx-auto rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                
+                                <!-- 主要结果区域 -->
+                                <div class="result-image-wrapper">
+                                    <img id="result-image" class="main-result-image rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                    
+                                    <!-- 缩略图容器 -->
+                                    <div id="thumbnail-container" class="thumbnail-container hidden">
+                                        <!-- 缩略图将通过JS动态生成 -->
+                                    </div>
+                                </div>
+                                
                                 <div class="mt-3 text-center">
                                     <button id="download-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center mx-auto transition-custom">
                                         <i class="fa fa-download mr-1"></i> 下载图片
@@ -543,7 +615,17 @@
                                 <div id="multi-format-conversion-notice" class="format-conversion-notice hidden">
                                     <i class="fa fa-spinner fa-spin mr-1"></i> 转换为PNG格式中...
                                 </div>
-                                <img id="multi-result-image" class="max-w-full max-h-64 mx-auto rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                
+                                <!-- 主要结果区域 -->
+                                <div class="multi-result-image-wrapper">
+                                    <img id="multi-result-image" class="main-multi-result-image rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                    
+                                    <!-- 缩略图容器 -->
+                                    <div id="multi-thumbnail-container" class="thumbnail-container hidden">
+                                        <!-- 缩略图将通过JS动态生成 -->
+                                    </div>
+                                </div>
+                                
                                 <div class="mt-3 text-center">
                                     <button id="multi-download-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center mx-auto transition-custom">
                                         <i class="fa fa-download mr-1"></i> 下载图片
@@ -694,6 +776,12 @@
         
         // 新增：画质选择变量
         let selectedQuality = '1K'; // 默认选择1K
+        
+        // 新增：多图相关变量
+        let currentResultImages = []; // 存储当前处理结果的所有图片
+        let currentMultiResultImages = []; // 存储多图处理结果的所有图片
+        let currentSelectedIndex = 0; // 当前选中的图片索引
+        let currentMultiSelectedIndex = 0; // 当前多图选中的图片索引
 
         // 图片上传区域相关元素
         const singleImageContainer = document.getElementById('single-image-container');
@@ -724,11 +812,13 @@
         const resultImageContainer = document.getElementById('result-image-container');
         const resultImage = document.getElementById('result-image');
         const downloadBtn = document.getElementById('download-btn');
+        const thumbnailContainer = document.getElementById('thumbnail-container');
         
         const multiResultArea = document.getElementById('multi-result-area');
         const multiResultImageContainer = document.getElementById('multi-result-image-container');
         const multiResultImage = document.getElementById('multi-result-image');
         const multiDownloadBtn = document.getElementById('multi-download-btn');
+        const multiThumbnailContainer = document.getElementById('multi-thumbnail-container');
 
         // 处理按钮相关
         const processBtn = document.getElementById('process-btn');
@@ -1600,7 +1690,7 @@
                 
                 clearTimeout(timeoutId);
                 
-                if (!result || (!result.imageUrl && !result.base64Image)) {
+                if (!result || (!result.imageUrl && !result.base64Image && !result.imageUrls)) {
                     if (result && result.isPainting) {
                         statusMessage.textContent = `AI正在绘制图案，将定期检查结果 (1/${MAX_WAIT_ATTEMPTS})`;
                         paintingProgress.style.display = 'block';
@@ -1625,53 +1715,119 @@
                 processCount++;
                 updateProcessCount();
                 
-                // 根据处理类型显示对应的结果区域
-                if (selectedInstruction === 'advanced') {
-                    multiResultImage.onload = () => {
-                        multiResultArea.classList.add('hidden');
-                        multiResultImageContainer.classList.remove('hidden');
-                        updateProgress(100);
-                        statusMessage.textContent = '处理完成';
+                // 处理返回的多张图片
+                if (result.imageUrls && result.imageUrls.length > 0) {
+                    // 有多张图片返回
+                    if (selectedInstruction === 'advanced') {
+                        // 处理多图上传的结果
+                        currentMultiResultImages = result.imageUrls;
+                        currentMultiSelectedIndex = 0;
                         
-                        addToHistory(multiResultImage.src);
+                        // 显示第一张图片
+                        multiResultImage.onload = () => {
+                            multiResultArea.classList.add('hidden');
+                            multiResultImageContainer.classList.remove('hidden');
+                            updateProgress(100);
+                            statusMessage.textContent = '处理完成';
+                            
+                            // 创建缩略图
+                            createMultiThumbnails();
+                            addToHistory(multiResultImage.src);
+                            
+                            setTimeout(() => {
+                                statusContainer.classList.add('hidden');
+                                updateProgress(0);
+                                multiReprocessBtn.disabled = multiReprocessBtn.classList.contains('btn-disabled');
+                                validateProcessButton();
+                                currentWaitAttempt = 0;
+                            }, 1500);
+                        };
                         
-                        setTimeout(() => {
-                            statusContainer.classList.add('hidden');
-                            updateProgress(0);
-                            multiReprocessBtn.disabled = multiReprocessBtn.classList.contains('btn-disabled');
-                            validateProcessButton();
-                            currentWaitAttempt = 0;
-                        }, 1500);
-                    };
-                    
-                    multiResultImage.onerror = () => {
-                        throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
-                    };
-                    
-                    multiResultImage.src = result.base64Image || result.imageUrl;
+                        multiResultImage.onerror = () => {
+                            throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                        };
+                        
+                        multiResultImage.src = currentMultiResultImages[0];
+                    } else {
+                        // 处理单图上传的结果
+                        currentResultImages = result.imageUrls;
+                        currentSelectedIndex = 0;
+                        
+                        // 显示第一张图片
+                        resultImage.onload = () => {
+                            resultArea.classList.add('hidden');
+                            resultImageContainer.classList.remove('hidden');
+                            updateProgress(100);
+                            statusMessage.textContent = '处理完成';
+                            
+                            // 创建缩略图
+                            createThumbnails();
+                            addToHistory(resultImage.src);
+                            
+                            setTimeout(() => {
+                                statusContainer.classList.add('hidden');
+                                updateProgress(0);
+                                reprocessBtn.disabled = reprocessBtn.classList.contains('btn-disabled');
+                                validateProcessButton();
+                                currentWaitAttempt = 0;
+                            }, 1500);
+                        };
+                        
+                        resultImage.onerror = () => {
+                            throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                        };
+                        
+                        resultImage.src = currentResultImages[0];
+                    }
                 } else {
-                    resultImage.onload = () => {
-                        resultArea.classList.add('hidden');
-                        resultImageContainer.classList.remove('hidden');
-                        updateProgress(100);
-                        statusMessage.textContent = '处理完成';
+                    // 只有单张图片返回
+                    if (selectedInstruction === 'advanced') {
+                        multiResultImage.onload = () => {
+                            multiResultArea.classList.add('hidden');
+                            multiResultImageContainer.classList.remove('hidden');
+                            updateProgress(100);
+                            statusMessage.textContent = '处理完成';
+                            
+                            addToHistory(multiResultImage.src);
+                            
+                            setTimeout(() => {
+                                statusContainer.classList.add('hidden');
+                                updateProgress(0);
+                                multiReprocessBtn.disabled = multiReprocessBtn.classList.contains('btn-disabled');
+                                validateProcessButton();
+                                currentWaitAttempt = 0;
+                            }, 1500);
+                        };
                         
-                        addToHistory(resultImage.src);
+                        multiResultImage.onerror = () => {
+                            throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                        };
                         
-                        setTimeout(() => {
-                            statusContainer.classList.add('hidden');
-                            updateProgress(0);
-                            reprocessBtn.disabled = reprocessBtn.classList.contains('btn-disabled');
-                            validateProcessButton();
-                            currentWaitAttempt = 0;
-                        }, 1500);
-                    };
-                    
-                    resultImage.onerror = () => {
-                        throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
-                    };
-                    
-                    resultImage.src = result.base64Image || result.imageUrl;
+                        multiResultImage.src = result.base64Image || result.imageUrl;
+                    } else {
+                        resultImage.onload = () => {
+                            resultArea.classList.add('hidden');
+                            resultImageContainer.classList.remove('hidden');
+                            updateProgress(100);
+                            statusMessage.textContent = '处理完成';
+                            
+                            addToHistory(resultImage.src);
+                            
+                            setTimeout(() => {
+                                statusContainer.classList.add('hidden');
+                                updateProgress(0);
+                                reprocessBtn.disabled = reprocessBtn.classList.contains('btn-disabled');
+                                validateProcessButton();
+                                currentWaitAttempt = 0;
+                            }, 1500);
+                        };
+                        
+                        resultImage.onerror = () => {
+                            throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                        };
+                        
+                        resultImage.src = result.base64Image || result.imageUrl;
+                    }
                 }
                 
             } catch (error) {
@@ -1719,6 +1875,90 @@
                 clearCooldown();
                 clearMultiCooldown();
             }
+        }
+
+        // 创建缩略图（单图处理结果）
+        function createThumbnails() {
+            thumbnailContainer.innerHTML = '';
+            
+            if (currentResultImages.length <= 1) {
+                thumbnailContainer.classList.add('hidden');
+                return;
+            }
+            
+            thumbnailContainer.classList.remove('hidden');
+            
+            currentResultImages.forEach((imageSrc, index) => {
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = `thumbnail-item ${index === currentSelectedIndex ? 'active' : ''}`;
+                thumbnailItem.dataset.index = index;
+                
+                const thumbnailImg = document.createElement('img');
+                thumbnailImg.className = 'thumbnail-img';
+                thumbnailImg.src = imageSrc;
+                thumbnailImg.alt = `结果 ${index + 1}`;
+                thumbnailImg.title = `点击查看结果 ${index + 1}`;
+                
+                thumbnailItem.appendChild(thumbnailImg);
+                thumbnailContainer.appendChild(thumbnailItem);
+                
+                // 点击缩略图切换主图
+                thumbnailItem.addEventListener('click', () => {
+                    if (index === currentSelectedIndex) return;
+                    
+                    // 更新选中状态
+                    document.querySelectorAll('#thumbnail-container .thumbnail-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    thumbnailItem.classList.add('active');
+                    
+                    // 更新主图
+                    currentSelectedIndex = index;
+                    resultImage.src = imageSrc;
+                });
+            });
+        }
+        
+        // 创建缩略图（多图处理结果）
+        function createMultiThumbnails() {
+            multiThumbnailContainer.innerHTML = '';
+            
+            if (currentMultiResultImages.length <= 1) {
+                multiThumbnailContainer.classList.add('hidden');
+                return;
+            }
+            
+            multiThumbnailContainer.classList.remove('hidden');
+            
+            currentMultiResultImages.forEach((imageSrc, index) => {
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = `thumbnail-item ${index === currentMultiSelectedIndex ? 'active' : ''}`;
+                thumbnailItem.dataset.index = index;
+                
+                const thumbnailImg = document.createElement('img');
+                thumbnailImg.className = 'thumbnail-img';
+                thumbnailImg.src = imageSrc;
+                thumbnailImg.alt = `结果 ${index + 1}`;
+                thumbnailImg.title = `点击查看结果 ${index + 1}`;
+                
+                thumbnailItem.appendChild(thumbnailImg);
+                multiThumbnailContainer.appendChild(thumbnailItem);
+                
+                // 点击缩略图切换主图
+                thumbnailItem.addEventListener('click', () => {
+                    if (index === currentMultiSelectedIndex) return;
+                    
+                    // 更新选中状态
+                    document.querySelectorAll('#multi-thumbnail-container .thumbnail-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    thumbnailItem.classList.add('active');
+                    
+                    // 更新主图
+                    currentMultiSelectedIndex = index;
+                    multiResultImage.src = imageSrc;
+                });
+            });
         }
 
         // 调用Chat API（用于矢量风格图案）
@@ -1881,7 +2121,7 @@
             // 根据指令类型构建不同的请求
             let payload = {
                 "model": selectedModel,
-                "n": 1,
+                "n": 4, // 修改：将n改为4，返回最多4张图片
                 "response_format": "url"
             };
 
@@ -1949,7 +2189,22 @@
 
             const data = await response.json();
             
-            // 从响应中提取图片URL
+            // 从响应中提取图片URL数组
+            let imageUrls = [];
+            if (data.data && Array.isArray(data.data)) {
+                data.data.forEach(item => {
+                    if (item.url) {
+                        imageUrls.push(item.url);
+                    }
+                });
+            }
+            
+            // 如果返回了多张图片，返回图片数组
+            if (imageUrls.length > 0) {
+                return { imageUrls: imageUrls };
+            }
+            
+            // 如果没有返回多张图片，尝试提取单个图片URL
             let imageUrl = null;
             if (data.data && data.data[0] && data.data[0].url) {
                 imageUrl = data.data[0].url;
@@ -2370,11 +2625,11 @@
         }
 
         // 下载图片功能
-        downloadBtn.addEventListener('click', async () => {
+        downloadBtn.addEventListener('click', async function() {
             await downloadImage(resultImage.src, "pattern_result");
         });
         
-        multiDownloadBtn.addEventListener('click', async () => {
+        multiDownloadBtn.addEventListener('click', async function() {
             await downloadImage(multiResultImage.src, "advanced_pattern_result");
         });
         
@@ -2384,7 +2639,6 @@
                 this.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> 下载中...';
                 this.disabled = true;
 
-                let imageSrc = arguments[0];
                 const timestamp = new Date().getTime();
                 let extension = 'png';
                 if (imageSrc.includes('data:image/jpeg') || imageSrc.includes('.jpg') || imageSrc.includes('.jpeg')) {
@@ -2392,7 +2646,7 @@
                 } else if (imageSrc.includes('data:image/webp') || imageSrc.includes('.webp')) {
                     extension = 'webp';
                 }
-                const filename = `${arguments[1]}_${timestamp}.${extension}`;
+                const filename = `${prefix}_${timestamp}.${extension}`;
 
                 if (imageSrc.startsWith('data:')) {
                     const link = document.createElement('a');
