@@ -131,6 +131,68 @@
                 font-size: 0.875rem;
                 z-index: 10;
             }
+            /* 缩略图容器样式 */
+            .thumbnail-container {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 80px;
+                background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+                display: flex;
+                gap: 8px;
+                padding: 8px;
+                z-index: 5;
+            }
+            .thumbnail-item {
+                flex: 1;
+                height: 100%;
+                border: 2px solid transparent;
+                border-radius: 4px;
+                overflow: hidden;
+                cursor: pointer;
+                opacity: 0.7;
+                transition: all 0.3s ease;
+            }
+            .thumbnail-item:hover {
+                opacity: 0.9;
+                transform: translateY(-2px);
+            }
+            .thumbnail-item.active {
+                border-color: #F59E0B;
+                opacity: 1;
+                box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+            }
+            .thumbnail-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            /* 结果区域样式调整 */
+            .result-image-wrapper {
+                position: relative;
+                width: 100%;
+                height: 256px; /* 固定高度 */
+                overflow: hidden;
+            }
+            .main-result-image {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                background-color: #f8f9fa;
+            }
+            .multi-result-image-wrapper {
+                position: relative;
+                width: 100%;
+                height: 256px; /* 固定高度 */
+                overflow: hidden;
+            }
+            .main-multi-result-image {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                background-color: #f8f9fa;
+            }
         }
     </style>
 </head>
@@ -210,13 +272,12 @@
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">网站公告</h3>
             <div class="text-gray-600 mb-6 text-left">
-                <p>旧通道已恢复稳定，所有次数已经折算回<strong class="text-red-500">0.5￥一次</strong>。</p>
-              <p>充值也恢复回原来的0.5一次。</p>
-              <p>给你造成不便表示抱歉！</p>
-              <p>所有处理方式均是0.5一次，1K\2K\4K\都是0.5一次！一般建议选2k，大图案选4k</p>
-              <p>关于比例选择：左右褶皱选横图比例，上下褶皱选竖图比例，平面图可以选比例扩图</p>
-              <p>竖图比例扩上下，横图比例扩左右</p>
-              <p>提取出来图案没有回位的，可以用进一步补回位，不知道具体操作可以在微信群@群主</p>
+                <p class="mb-2">由于延迟问题，有些图返回时间会超10分钟</p>
+              <p class="mb-2">开始提取图案后请耐心等待，超过12分钟则刷新点击重新开始</p>
+              <p class="mb-2">不延迟3分钟内就能返回图片，最快20多秒就能返回</p>
+              <p class="mb-2">所有处理方式均是0.5￥一次，1K\2K\4K\都是0.5￥一次！</p>
+              <p class="mb-2">关于比例选择：左右褶皱选横图比例，上下褶皱选竖图比例，平面图可以选比例扩图</p>
+              <p class="mb-2">有什么问题随时微信群@群主</p>
             </div>
             <div class="flex justify-center">
                 <button id="channel-change-confirm" class="modal-close bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-custom">
@@ -287,7 +348,7 @@
                     <!-- 修改：将处理方式改为一排显示 -->
                     <div class="flex flex-wrap gap-4" id="instructions-container">
                         <!-- 新增：新图案提取（选比例） -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="new-ratio" data-model="gemini-3-pro-image-preview">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="new-ratio" data-api-type="image-generations">
                             <h4 class="font-medium text-gray-800 mb-2">新图案提取（选比例）</h4>
                             <p class="text-sm text-gray-600">将图案处理为四方连续的循环图案或定位花，适合大面积印花使用，可选择输出比例。</p>
                             
@@ -350,7 +411,7 @@
                                         <button type="button" id="new-ratio-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
                                             1K
                                         </button>
-                                        <button type="button" id="new-ratio-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k-vip">
+                                        <button type="button" id="new-ratio-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
                                             2K
                                         </button>
                                         <button type="button" id="new-ratio-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
@@ -362,7 +423,7 @@
                         </div>
 
                         <!-- 新增指令选项3 - 矢量风格图案 -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="vector" data-model="gpt-image-1.5">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="vector" data-api-type="chat">
                             <h4 class="font-medium text-gray-800 mb-2">矢量风格图案</h4>
                             <p class="text-sm text-gray-600">比如球服、徽章、logo等图案的提取，可以选择矢量风格输出。按截图比例选择输出比例。出图时间会稍慢一些、图案更清晰！大概3分钟出一张图。不适合花卉等密集花型提取</p>
                             
@@ -399,7 +460,7 @@
                         </div>
 
                         <!-- 新增指令选项4 - 进一步处理-->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-model="gemini-3-pro-image-preview">
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-api-type="image-generations">
                             <h4 class="font-medium text-gray-800 mb-2">进一步处理</h4>
                             <p class="text-sm text-gray-600">换背景、去水印、去绣花、换风格(3D,刺绣,水彩等）、花型图案换色、服装换色换花型、模特换装试衣等都可以在这个处理方式实现</p>
                             <!-- 自定义指令输入框 -->
@@ -415,7 +476,7 @@
                                         <button type="button" id="advanced-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
                                             1K
                                         </button>
-                                        <button type="button" id="advanced-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k-vip">
+                                        <button type="button" id="advanced-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
                                             2K
                                         </button>
                                         <button type="button" id="advanced-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
@@ -452,7 +513,7 @@
                             </div>
                         </div>
 
-                        <!-- 处理结果区域 -->
+                        <!-- 处理结果区域 - 修改：支持多图显示 -->
                         <div class="flex-1">
                             <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
                                 <i class="fa fa-magic text-secondary mr-2"></i>处理结果
@@ -465,7 +526,17 @@
                                 <div id="format-conversion-notice" class="format-conversion-notice hidden">
                                     <i class="fa fa-spinner fa-spin mr-1"></i> 转换为PNG格式中...
                                 </div>
-                                <img id="result-image" class="max-w-full max-h-64 mx-auto rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                
+                                <!-- 主要结果区域 -->
+                                <div class="result-image-wrapper">
+                                    <img id="result-image" class="main-result-image rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                    
+                                    <!-- 缩略图容器 -->
+                                    <div id="thumbnail-container" class="thumbnail-container hidden">
+                                        <!-- 缩略图将通过JS动态生成 -->
+                                    </div>
+                                </div>
+                                
                                 <div class="mt-3 text-center">
                                     <button id="download-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center mx-auto transition-custom">
                                         <i class="fa fa-download mr-1"></i> 下载图片
@@ -544,7 +615,17 @@
                                 <div id="multi-format-conversion-notice" class="format-conversion-notice hidden">
                                     <i class="fa fa-spinner fa-spin mr-1"></i> 转换为PNG格式中...
                                 </div>
-                                <img id="multi-result-image" class="max-w-full max-h-64 mx-auto rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                
+                                <!-- 主要结果区域 -->
+                                <div class="multi-result-image-wrapper">
+                                    <img id="multi-result-image" class="main-multi-result-image rounded-lg shadow-sm cursor-zoom-in" src="" alt="处理结果图" title="点击放大查看">
+                                    
+                                    <!-- 缩略图容器 -->
+                                    <div id="multi-thumbnail-container" class="thumbnail-container hidden">
+                                        <!-- 缩略图将通过JS动态生成 -->
+                                    </div>
+                                </div>
+                                
                                 <div class="mt-3 text-center">
                                     <button id="multi-download-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center mx-auto transition-custom">
                                         <i class="fa fa-download mr-1"></i> 下载图片
@@ -684,16 +765,23 @@
         
         let selectedInstruction = 'new-ratio';
         let selectedModel = 'gemini-3-pro-image-preview';
+        let selectedApiType = 'image-generations'; // 新增：API类型
         let selectedStyle = [];
         let selectedRatio = null;
         let customInstruction = '';
         
         // 新增：新图案提取（选比例）相关变量
         let selectedInstructionType = 'repeat'; // 'repeat' 或 'position'
-        let selectedNewRatio = '1x1'; // 默认选择1:1
+        let selectedNewRatio = '1x1'; // 默认选择1x1
         
         // 新增：画质选择变量
         let selectedQuality = '1K'; // 默认选择1K
+        
+        // 新增：多图相关变量
+        let currentResultImages = []; // 存储当前处理结果的所有图片
+        let currentMultiResultImages = []; // 存储多图处理结果的所有图片
+        let currentSelectedIndex = 0; // 当前选中的图片索引
+        let currentMultiSelectedIndex = 0; // 当前多图选中的图片索引
 
         // 图片上传区域相关元素
         const singleImageContainer = document.getElementById('single-image-container');
@@ -724,11 +812,13 @@
         const resultImageContainer = document.getElementById('result-image-container');
         const resultImage = document.getElementById('result-image');
         const downloadBtn = document.getElementById('download-btn');
+        const thumbnailContainer = document.getElementById('thumbnail-container');
         
         const multiResultArea = document.getElementById('multi-result-area');
         const multiResultImageContainer = document.getElementById('multi-result-image-container');
         const multiResultImage = document.getElementById('multi-result-image');
         const multiDownloadBtn = document.getElementById('multi-download-btn');
+        const multiThumbnailContainer = document.getElementById('multi-thumbnail-container');
 
         // 处理按钮相关
         const processBtn = document.getElementById('process-btn');
@@ -783,7 +873,8 @@
 
         // 配置参数
         let ACCESS_PASSWORD = "";
-        const API_ENDPOINT = "https://apius.tu-zi.com/v1/chat/completions";
+        const API_ENDPOINT_CHAT = "https://apius.tu-zi.com/v1/chat/completions";
+        const API_ENDPOINT_IMAGE_GENERATIONS = "https://api.tu-zi.com/v1/images/generations"; // 新增：图片生成API端点
         const API_TIMEOUT = 1200000; // 20分钟超时，给AI足够的绘画时间
         const PAINTING_PROGRESS_INTERVAL = 5000;
         const CHECK_RESULT_INTERVAL = 30000;
@@ -791,33 +882,25 @@
 
         // 四种处理指令的详细描述
         const instructionDetails = {
-            // 新增：新图案提取（选比例）指令
+            // 新增：新图案提取（选比例）指令 - 用于image/generations API
             'new-ratio': {
-                'repeat': `指令：把衣服的印花图案平铺开
+                'repeat': `把衣服的印花图案平铺开，
 要求：
 1. 保持图案大小、位置、排布不变
 2. 校正图案，还原出图案平整的样子
 3. 把不完整的图案绘制完整
 4. 不要改变图案的颜色和风格
 5. 去掉褶皱，重绘平整
-6. 优化图案主体定位，适合印花使用
-7. 输出比例{ratio}
-
-输出格式：
-仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`,
+6. 优化图案主体定位，适合印花使用`,
                 
-                'position': `指令：把衣服的印花图案平铺开
+                'position': `把衣服的印花图案平铺开，
 要求：
 1. 保持图案大小、位置、排布不变
 2. 校正图案，还原出图案平整的样子
 3. 把不完整的图案绘制完整
 4. 不要改变图案的颜色和风格
 5. 去掉褶皱，重绘平整
-6. 优化图案主体定位，适合印花使用
-7. 输出比例{ratio}
-
-输出格式：
-仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`
+6. 优化图案主体定位，适合印花使用`
             },
 
             vector: `指令：请处理这张图片，将图案做成壁纸。
@@ -843,7 +926,7 @@
         // 画质与模型映射
         const qualityModelMap = {
             '1K': 'gemini-3-pro-image-preview',
-            '2K': 'gemini-3-pro-image-preview-2k-vip',
+            '2K': 'gemini-3-pro-image-preview-2k',
             '4K': 'gemini-3-pro-image-preview-4k'
         };
 
@@ -906,6 +989,7 @@
                 option.classList.add('instruction-active');
                 // 记录选中的指令和模型
                 selectedInstruction = option.getAttribute('data-instruction');
+                selectedApiType = option.getAttribute('data-api-type'); // 获取API类型
                 
                 // 根据选择的指令切换图片上传区域
                 if (selectedInstruction === 'advanced') {
@@ -1594,102 +1678,19 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
-                // 准备图片数据 - 根据处理类型准备单张或多张图片
-                let imageContents = [];
-                if (selectedInstruction === 'advanced') {
-                    // 进一步处理 - 准备已上传的图片（1张或2张）
-                    const base64Image1 = await convertImageToBase64(imagePreview1.src);
-                    imageContents.push({
-                        "type": "image_url",
-                        "image_url": {
-                            "url": `data:image/jpeg;base64,${base64Image1}`
-                        }
-                    });
-                    
-                    // 如果第二张图片已上传，也添加进去
-                    if (imagePreviewContainer2.classList.contains('hidden') === false) {
-                        const base64Image2 = await convertImageToBase64(imagePreview2.src);
-                        imageContents.push({
-                            "type": "image_url",
-                            "image_url": {
-                                "url": `data:image/jpeg;base64,${base64Image2}`
-                            }
-                        });
-                    }
+                // 根据API类型调用不同的处理函数
+                let result;
+                if (selectedApiType === 'chat') {
+                    // 矢量风格图案使用chat格式
+                    result = await callChatAPI(controller.signal, currentSessionId);
                 } else {
-                    // 其他处理 - 准备一张图片
-                    const base64Image = await convertImageToBase64(imagePreview.src);
-                    imageContents.push({
-                        "type": "image_url",
-                        "image_url": {
-                            "url": `data:image/jpeg;base64,${base64Image}`
-                        }
-                    });
+                    // 新图案提取（选比例）和进一步处理使用image/generations格式
+                    result = await callImageGenerationsAPI(controller.signal, currentSessionId);
                 }
                 
-                updateProgress(30);
-                statusMessage.textContent = '正在分析图片内容...';
-
-                // 构建指令文本
-                let instructionText = '';
-                
-                if (selectedInstruction === 'new-ratio') {
-                    // 新图案提取（选比例）指令
-                    instructionText = instructionDetails['new-ratio'][selectedInstructionType].replace('{ratio}', selectedNewRatio);
-                } else if (selectedInstruction === 'vector') {
-                    // 矢量风格图案指令
-                    instructionText = instructionDetails.vector;
-                    
-                    let styleTexts = [];
-                    if (selectedStyle.includes('vector')) {
-                        styleTexts.push('7. 输出风格矢量');
-                    }
-                    if (selectedStyle.includes('seamless')) {
-                        styleTexts.push('7. 要求四方循环无缝衔接');
-                    }
-                    
-                    if (styleTexts.length > 1) {
-                        styleTexts = styleTexts.map((text, index) => {
-                            return text.replace('7.', `${7 + index}.`);
-                        });
-                    }
-                    
-                    const styleText = styleTexts.join('\n');
-                    const ratioText = `8. 输出比例${selectedRatio}`;
-                    
-                    instructionText = instructionText
-                        .replace('{styleOptions}', styleText ? styleText : '')
-                        .replace('{ratioOption}', ratioText);
-                } else if (selectedInstruction === 'advanced') {
-                    instructionText = instructionDetails.advanced.replace('{customInstruction}', customInstruction);
-                } else {
-                    instructionText = instructionDetails[selectedInstruction] || instructionDetails.repeat;
-                }
-                
-                instructionText += `\n\n会话ID: ${currentSessionId}`;
-
-                // 构建消息内容（包含所有图片）
-                const contentList = [{"type": "text", "text": instructionText}];
-                contentList.push(...imageContents);
-
-                const messages = [
-                    {
-                        "role": "user",
-                        "content": contentList
-                    }
-                ];
-
-                // 调用API
-                const result = await Promise.race([
-                    callPatternExtractionAPI(messages, controller.signal, currentSessionId),
-                    new Promise((_, reject) => {
-                        setTimeout(() => reject(new Error('请求超时，超过20分钟未收到响应')), API_TIMEOUT);
-                    })
-                ]);
-
                 clearTimeout(timeoutId);
                 
-                if (!result || (!result.imageUrl && !result.base64Image)) {
+                if (!result || (!result.imageUrl && !result.base64Image && !result.imageUrls)) {
                     if (result && result.isPainting) {
                         statusMessage.textContent = `AI正在绘制图案，将定期检查结果 (1/${MAX_WAIT_ATTEMPTS})`;
                         paintingProgress.style.display = 'block';
@@ -1714,53 +1715,133 @@
                 processCount++;
                 updateProcessCount();
                 
-                // 根据处理类型显示对应的结果区域
-                if (selectedInstruction === 'advanced') {
-                    multiResultImage.onload = () => {
-                        multiResultArea.classList.add('hidden');
-                        multiResultImageContainer.classList.remove('hidden');
-                        updateProgress(100);
-                        statusMessage.textContent = '处理完成';
+                // 处理返回的多张图片
+                if (result.imageUrls && result.imageUrls.length > 0) {
+                    // 有多张图片返回
+                    if (selectedInstruction === 'advanced') {
+                        // 处理多图上传的结果
+                        currentMultiResultImages = result.imageUrls;
+                        currentMultiSelectedIndex = 0;
                         
-                        addToHistory(multiResultImage.src);
+                        // 清空之前的缩略图容器
+                        multiThumbnailContainer.classList.add('hidden');
+                        multiThumbnailContainer.innerHTML = '';
                         
-                        setTimeout(() => {
-                            statusContainer.classList.add('hidden');
-                            updateProgress(0);
-                            multiReprocessBtn.disabled = multiReprocessBtn.classList.contains('btn-disabled');
-                            validateProcessButton();
-                            currentWaitAttempt = 0;
-                        }, 1500);
-                    };
-                    
-                    multiResultImage.onerror = () => {
-                        throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
-                    };
-                    
-                    multiResultImage.src = result.base64Image || result.imageUrl;
+                        // 显示第一张图片
+                        multiResultImage.onload = () => {
+                            multiResultArea.classList.add('hidden');
+                            multiResultImageContainer.classList.remove('hidden');
+                            updateProgress(100);
+                            statusMessage.textContent = '处理完成';
+                            
+                            // 创建缩略图
+                            createMultiThumbnails();
+                            addToHistory(multiResultImage.src);
+                            
+                            setTimeout(() => {
+                                statusContainer.classList.add('hidden');
+                                updateProgress(0);
+                                multiReprocessBtn.disabled = multiReprocessBtn.classList.contains('btn-disabled');
+                                validateProcessButton();
+                                currentWaitAttempt = 0;
+                            }, 1500);
+                        };
+                        
+                        multiResultImage.onerror = () => {
+                            throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                        };
+                        
+                        multiResultImage.src = currentMultiResultImages[0];
+                    } else {
+                        // 处理单图上传的结果
+                        currentResultImages = result.imageUrls;
+                        currentSelectedIndex = 0;
+                        
+                        // 清空之前的缩略图容器
+                        thumbnailContainer.classList.add('hidden');
+                        thumbnailContainer.innerHTML = '';
+                        
+                        // 显示第一张图片
+                        resultImage.onload = () => {
+                            resultArea.classList.add('hidden');
+                            resultImageContainer.classList.remove('hidden');
+                            updateProgress(100);
+                            statusMessage.textContent = '处理完成';
+                            
+                            // 创建缩略图
+                            createThumbnails();
+                            addToHistory(resultImage.src);
+                            
+                            setTimeout(() => {
+                                statusContainer.classList.add('hidden');
+                                updateProgress(0);
+                                reprocessBtn.disabled = reprocessBtn.classList.contains('btn-disabled');
+                                validateProcessButton();
+                                currentWaitAttempt = 0;
+                            }, 1500);
+                        };
+                        
+                        resultImage.onerror = () => {
+                            throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                        };
+                        
+                        resultImage.src = currentResultImages[0];
+                    }
                 } else {
-                    resultImage.onload = () => {
-                        resultArea.classList.add('hidden');
-                        resultImageContainer.classList.remove('hidden');
-                        updateProgress(100);
-                        statusMessage.textContent = '处理完成';
-                        
-                        addToHistory(resultImage.src);
-                        
-                        setTimeout(() => {
-                            statusContainer.classList.add('hidden');
-                            updateProgress(0);
-                            reprocessBtn.disabled = reprocessBtn.classList.contains('btn-disabled');
-                            validateProcessButton();
-                            currentWaitAttempt = 0;
-                        }, 1500);
-                    };
+                    // 只有单张图片返回
+                    // 清空之前的缩略图容器（修复问题1）
+                    thumbnailContainer.classList.add('hidden');
+                    thumbnailContainer.innerHTML = '';
+                    multiThumbnailContainer.classList.add('hidden');
+                    multiThumbnailContainer.innerHTML = '';
                     
-                    resultImage.onerror = () => {
-                        throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
-                    };
-                    
-                    resultImage.src = result.base64Image || result.imageUrl;
+                    if (selectedInstruction === 'advanced') {
+                        multiResultImage.onload = () => {
+                            multiResultArea.classList.add('hidden');
+                            multiResultImageContainer.classList.remove('hidden');
+                            updateProgress(100);
+                            statusMessage.textContent = '处理完成';
+                            
+                            addToHistory(multiResultImage.src);
+                            
+                            setTimeout(() => {
+                                statusContainer.classList.add('hidden');
+                                updateProgress(0);
+                                multiReprocessBtn.disabled = multiReprocessBtn.classList.contains('btn-disabled');
+                                validateProcessButton();
+                                currentWaitAttempt = 0;
+                            }, 1500);
+                        };
+                        
+                        multiResultImage.onerror = () => {
+                            throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                        };
+                        
+                        multiResultImage.src = result.base64Image || result.imageUrl;
+                    } else {
+                        resultImage.onload = () => {
+                            resultArea.classList.add('hidden');
+                            resultImageContainer.classList.remove('hidden');
+                            updateProgress(100);
+                            statusMessage.textContent = '处理完成';
+                            
+                            addToHistory(resultImage.src);
+                            
+                            setTimeout(() => {
+                                statusContainer.classList.add('hidden');
+                                updateProgress(0);
+                                reprocessBtn.disabled = reprocessBtn.classList.contains('btn-disabled');
+                                validateProcessButton();
+                                currentWaitAttempt = 0;
+                            }, 1500);
+                        };
+                        
+                        resultImage.onerror = () => {
+                            throw new Error('无法加载处理后的图片，可能是图片地址无效或已过期');
+                        };
+                        
+                        resultImage.src = result.base64Image || result.imageUrl;
+                    }
                 }
                 
             } catch (error) {
@@ -1810,6 +1891,349 @@
             }
         }
 
+        // 创建缩略图（单图处理结果）
+        function createThumbnails() {
+            thumbnailContainer.innerHTML = '';
+            
+            if (currentResultImages.length <= 1) {
+                thumbnailContainer.classList.add('hidden');
+                return;
+            }
+            
+            thumbnailContainer.classList.remove('hidden');
+            
+            currentResultImages.forEach((imageSrc, index) => {
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = `thumbnail-item ${index === currentSelectedIndex ? 'active' : ''}`;
+                thumbnailItem.dataset.index = index;
+                
+                const thumbnailImg = document.createElement('img');
+                thumbnailImg.className = 'thumbnail-img';
+                thumbnailImg.src = imageSrc;
+                thumbnailImg.alt = `结果 ${index + 1}`;
+                thumbnailImg.title = `点击查看结果 ${index + 1}`;
+                
+                thumbnailItem.appendChild(thumbnailImg);
+                thumbnailContainer.appendChild(thumbnailItem);
+                
+                // 点击缩略图切换主图
+                thumbnailItem.addEventListener('click', () => {
+                    if (index === currentSelectedIndex) return;
+                    
+                    // 更新选中状态
+                    document.querySelectorAll('#thumbnail-container .thumbnail-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    thumbnailItem.classList.add('active');
+                    
+                    // 更新主图
+                    currentSelectedIndex = index;
+                    resultImage.src = imageSrc;
+                });
+            });
+        }
+        
+        // 创建缩略图（多图处理结果）
+        function createMultiThumbnails() {
+            multiThumbnailContainer.innerHTML = '';
+            
+            if (currentMultiResultImages.length <= 1) {
+                multiThumbnailContainer.classList.add('hidden');
+                return;
+            }
+            
+            multiThumbnailContainer.classList.remove('hidden');
+            
+            currentMultiResultImages.forEach((imageSrc, index) => {
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = `thumbnail-item ${index === currentMultiSelectedIndex ? 'active' : ''}`;
+                thumbnailItem.dataset.index = index;
+                
+                const thumbnailImg = document.createElement('img');
+                thumbnailImg.className = 'thumbnail-img';
+                thumbnailImg.src = imageSrc;
+                thumbnailImg.alt = `结果 ${index + 1}`;
+                thumbnailImg.title = `点击查看结果 ${index + 1}`;
+                
+                thumbnailItem.appendChild(thumbnailImg);
+                multiThumbnailContainer.appendChild(thumbnailItem);
+                
+                // 点击缩略图切换主图
+                thumbnailItem.addEventListener('click', () => {
+                    if (index === currentMultiSelectedIndex) return;
+                    
+                    // 更新选中状态
+                    document.querySelectorAll('#multi-thumbnail-container .thumbnail-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    thumbnailItem.classList.add('active');
+                    
+                    // 更新主图
+                    currentMultiSelectedIndex = index;
+                    multiResultImage.src = imageSrc;
+                });
+            });
+        }
+
+        // 调用Chat API（用于矢量风格图案）
+        async function callChatAPI(signal, sessionId) {
+            statusMessage.textContent = '正在分析图片内容...';
+            updateProgress(30);
+
+            // 准备图片数据
+            const base64Image = await convertImageToBase64(imagePreview.src);
+            
+            // 构建指令文本
+            let instructionText = instructionDetails.vector;
+            
+            let styleTexts = [];
+            if (selectedStyle.includes('vector')) {
+                styleTexts.push('7. 输出风格矢量');
+            }
+            if (selectedStyle.includes('seamless')) {
+                styleTexts.push('7. 要求四方循环无缝衔接');
+            }
+            
+            if (styleTexts.length > 1) {
+                styleTexts = styleTexts.map((text, index) => {
+                    return text.replace('7.', `${7 + index}.`);
+                });
+            }
+            
+            const styleText = styleTexts.join('\n');
+            const ratioText = `8. 输出比例${selectedRatio}`;
+            
+            instructionText = instructionText
+                .replace('{styleOptions}', styleText ? styleText : '')
+                .replace('{ratioOption}', ratioText);
+            
+            instructionText += `\n\n会话ID: ${sessionId}`;
+
+            // 构建消息内容
+            const messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": instructionText},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": `data:image/jpeg;base64,${base64Image}`
+                            }
+                        }
+                    ]
+                }
+            ];
+
+            const payload = {
+                "model": selectedModel,
+                "messages": messages,
+                "stream": true
+            };
+
+            const response = await fetch(API_ENDPOINT_CHAT, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${ACCESS_PASSWORD}`
+                },
+                body: JSON.stringify(payload),
+                signal: signal
+            });
+
+            if (response.status === 401) {
+                throw new Error(`API请求失败: Unauthorized（状态码：401）`);
+            }
+            
+            if (response.status === 503) {
+                const errorDetails = await response.text();
+                if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
+                    throw new Error(`API请求失败: Service Unavailable（状态码：503）\n${errorDetails}`);
+                }
+            }
+
+            if (!response.ok) {
+                let errorDetails = await response.text();
+                try {
+                    const errorJson = JSON.parse(errorDetails);
+                    errorDetails = errorJson.error?.message || errorDetails;
+                } catch (e) {}
+                throw new Error(`API请求失败: ${response.statusText}（状态码：${response.status}）\n${errorDetails}`);
+            }
+
+            // 处理流式响应
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let content = '';
+            let fullStreamContent = '';
+            let receivedPaintingStatus = false;
+            
+            statusMessage.textContent = '正在接收结果...';
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value, { stream: true });
+                content += chunk;
+                fullStreamContent += chunk;
+                
+                if (!receivedPaintingStatus && chunk.includes('🖌️正在绘画')) {
+                    receivedPaintingStatus = true;
+                    statusMessage.textContent = 'AI正在生成图案...';
+                    paintingProgress.style.display = 'block';
+                    startPaintingProgressSimulation();
+                }
+                
+                updateProgress(30 + Math.min(40, Math.floor((content.length / 1000) * 40)));
+            }
+            
+            const lines = content.split('\n').filter(line => line.trim() !== '');
+            let fullResponse = '';
+            
+            for (const line of lines) {
+                const data = line.replace(/^data: /, '');
+                if (data === '[DONE]') break;
+                
+                try {
+                    const json = JSON.parse(data);
+                    if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
+                        fullResponse += json.choices[0].delta.content;
+                    }
+                } catch (e) {
+                    console.warn('解析流式数据失败:', e);
+                }
+            }
+            
+            // 提取图片URL或Base64
+            const extractedData = extractImageData(fullResponse);
+            const imageUrl = extractedData.imageUrl;
+            const base64ImageResult = extractedData.base64Image;
+
+            // 检查是否仍在绘画中
+            const isPainting = fullResponse.includes('🖌️正在绘画') || 
+                              fullResponse.includes('仍在处理') ||
+                              fullResponse.includes('继续绘画');
+
+            if (!imageUrl && !base64ImageResult && isPainting) {
+                return { isPainting: true };
+            }
+
+            if (!imageUrl && !base64ImageResult) {
+                console.error("无法提取图片URL或Base64，原始响应内容:", fullResponse);
+                throw new Error(`API返回内容中未找到有效的图片地址: ${fullResponse.substring(0, 200)}...`);
+            }
+
+            return { imageUrl: imageUrl, base64Image: base64ImageResult };
+        }
+
+        // 调用Image Generations API（用于新图案提取和进一步处理）
+        async function callImageGenerationsAPI(signal, sessionId) {
+            statusMessage.textContent = '正在准备图片数据...';
+            updateProgress(20);
+
+            // 根据指令类型构建不同的请求
+            let payload = {
+                "model": selectedModel,
+                "n": 4, // 修改：将n改为4，返回最多4张图片
+                "response_format": "url"
+            };
+
+            // 根据指令类型设置不同的参数
+            if (selectedInstruction === 'new-ratio') {
+                // 新图案提取（选比例）
+                const base64Image = await convertImageToBase64(imagePreview.src);
+                payload.prompt = instructionDetails['new-ratio'][selectedInstructionType];
+                payload.image = `data:image/jpeg;base64,${base64Image}`;
+                payload.size = selectedNewRatio; // 使用选定的比例
+            } else if (selectedInstruction === 'advanced') {
+                // 进一步处理
+                payload.prompt = customInstruction;
+                payload.size = ""; // 进一步处理使用auto
+                
+                // 准备图片数组
+                const imageArray = [];
+                const base64Image1 = await convertImageToBase64(imagePreview1.src);
+                imageArray.push(`data:image/jpeg;base64,${base64Image1}`);
+                
+                // 如果第二张图片已上传，也添加进去
+                if (imagePreviewContainer2.classList.contains('hidden') === false) {
+                    const base64Image2 = await convertImageToBase64(imagePreview2.src);
+                    imageArray.push(`data:image/jpeg;base64,${base64Image2}`);
+                }
+                
+                payload.image = imageArray;
+            }
+
+            updateProgress(40);
+            statusMessage.textContent = 'AI正在处理图案，请耐心等待...';
+
+            const response = await fetch(API_ENDPOINT_IMAGE_GENERATIONS, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${ACCESS_PASSWORD}`
+                },
+                body: JSON.stringify(payload),
+                signal: signal
+            });
+
+            if (response.status === 401) {
+                throw new Error(`API请求失败: Unauthorized（状态码：401）`);
+            }
+            
+            if (response.status === 503) {
+                const errorDetails = await response.text();
+                if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
+                    throw new Error(`API请求失败: Service Unavailable（状态码：503）\n${errorDetails}`);
+                }
+            }
+
+            if (!response.ok) {
+                let errorDetails = await response.text();
+                try {
+                    const errorJson = JSON.parse(errorDetails);
+                    errorDetails = errorJson.error?.message || errorDetails;
+                } catch (e) {}
+                throw new Error(`API请求失败: ${response.statusText}（状态码：${response.status}）\n${errorDetails}`);
+            }
+
+            updateProgress(60);
+            statusMessage.textContent = '正在处理AI响应...';
+
+            const data = await response.json();
+            
+            // 从响应中提取图片URL数组
+            let imageUrls = [];
+            if (data.data && Array.isArray(data.data)) {
+                data.data.forEach(item => {
+                    if (item.url) {
+                        imageUrls.push(item.url);
+                    }
+                });
+            }
+            
+            // 如果返回了多张图片，返回图片数组
+            if (imageUrls.length > 0) {
+                return { imageUrls: imageUrls };
+            }
+            
+            // 如果没有返回多张图片，尝试提取单个图片URL
+            let imageUrl = null;
+            if (data.data && data.data[0] && data.data[0].url) {
+                imageUrl = data.data[0].url;
+            } else if (data.url) {
+                imageUrl = data.url;
+            }
+
+            if (!imageUrl) {
+                console.error("无法从响应中提取图片URL，响应内容:", data);
+                throw new Error('API返回内容中未找到有效的图片URL');
+            }
+
+            return { imageUrl: imageUrl, base64Image: null };
+        }
+
         // 检查处理结果（用于轮询）
         async function checkProcessingResult(sessionId) {
             if (sessionId !== currentSessionId) {
@@ -1819,78 +2243,100 @@
             try {
                 statusMessage.textContent = `正在检查结果 (${currentWaitAttempt}/${MAX_WAIT_ATTEMPTS})`;
                 
-                // 构建检查结果的请求
-                const payload = {
-                    "model": selectedModel,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": `请返回会话ID为${sessionId}的图片处理结果，仅返回图片URL或Base64编码，不添加任何其他文字。`
+                // 根据API类型构建不同的检查请求
+                let result;
+                if (selectedApiType === 'chat') {
+                    // 构建检查结果的请求
+                    const payload = {
+                        "model": selectedModel,
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": `请返回会话ID为${sessionId}的图片处理结果，仅返回图片URL或Base64编码，不添加任何其他文字。`
                                 }
-                            ]
-                        }
-                    ],
-                    "max_tokens": 100
-                };
-                
-                const response = await fetch(API_ENDPOINT, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${ACCESS_PASSWORD}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (response.status === 401) {
-                    modals.usageExhausted.classList.add('active');
-                    accessPasswordInput.value = '';
-                    ACCESS_PASSWORD = '';
-                    processBtn.disabled = true;
-                    statusContainer.classList.add('hidden');
-                    return;
-                }
-                
-                if (response.status === 503) {
-                    if (await response.text().includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
-                        modals.changeToken.classList.add('active');
+                                ]
+                            }
+                        ],
+                        "max_tokens": 100
+                    };
+                    
+                    const response = await fetch(API_ENDPOINT_CHAT, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${ACCESS_PASSWORD}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (response.status === 401) {
+                        modals.usageExhausted.classList.add('active');
                         accessPasswordInput.value = '';
                         ACCESS_PASSWORD = '';
                         processBtn.disabled = true;
                         statusContainer.classList.add('hidden');
                         return;
                     }
-                }
-                
-                if (!response.ok) {
-                    throw new Error(`检查结果失败: ${response.statusText}`);
-                }
-                
-                let data;
-                try {
-                    data = await response.json();
-                } catch (e) {
-                    throw new Error(`解析响应失败: ${e.message}, 响应内容: ${await response.text()}`);
-                }
-                
-                let fullResponse = '';
-                
-                if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-                    fullResponse = data.choices[0].message.content;
-                }
-                
-                const extractedData = extractImageData(fullResponse);
-                const imageUrl = extractedData.imageUrl;
-                const base64Image = extractedData.base64Image;
+                    
+                    if (response.status === 503) {
+                        if (await response.text().includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
+                            modals.changeToken.classList.add('active');
+                            accessPasswordInput.value = '';
+                            ACCESS_PASSWORD = '';
+                            processBtn.disabled = true;
+                            statusContainer.classList.add('hidden');
+                            return;
+                        }
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error(`检查结果失败: ${response.statusText}`);
+                    }
+                    
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        throw new Error(`解析响应失败: ${e.message}, 响应内容: ${await response.text()}`);
+                    }
+                    
+                    let fullResponse = '';
+                    
+                    if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+                        fullResponse = data.choices[0].message.content;
+                    }
+                    
+                    const extractedData = extractImageData(fullResponse);
+                    const imageUrl = extractedData.imageUrl;
+                    const base64Image = extractedData.base64Image;
 
-                const isPainting = fullResponse.includes('🖌️正在绘画') || 
-                                  fullResponse.includes('仍在处理') ||
-                                  fullResponse.includes('继续绘画');
+                    const isPainting = fullResponse.includes('🖌️正在绘画') || 
+                                      fullResponse.includes('仍在处理') ||
+                                      fullResponse.includes('继续绘画');
 
-                if (imageUrl || base64Image) {
+                    if (imageUrl || base64Image) {
+                        result = { imageUrl: imageUrl, base64Image: base64Image };
+                    } else if (isPainting && currentWaitAttempt < MAX_WAIT_ATTEMPTS) {
+                        currentWaitAttempt++;
+                        statusMessage.textContent = `AI仍在绘制图案，将继续等待 (${currentWaitAttempt}/${MAX_WAIT_ATTEMPTS})`;
+                        updateProgress(60 + (currentWaitAttempt / MAX_WAIT_ATTEMPTS) * 20);
+                        
+                        setTimeout(() => {
+                            checkProcessingResult(sessionId);
+                        }, CHECK_RESULT_INTERVAL);
+                        return;
+                    } else {
+                        throw new Error(`经过多次尝试仍未获取到有效图片地址。\n\n最后响应: ${fullResponse.substring(0, 200)}...`);
+                    }
+                } else {
+                    // 对于image/generations API，通常不需要轮询，直接返回错误
+                    throw new Error('图片生成请求超时，请重试');
+                }
+                
+                if (result && (result.imageUrl || result.base64Image)) {
                     completePaintingProgress();
                     updateProgress(80);
                     statusMessage.textContent = '正在处理结果...';
@@ -1916,7 +2362,7 @@
                             }, 1500);
                         };
                         
-                        multiResultImage.src = base64Image || imageUrl;
+                        multiResultImage.src = result.base64Image || result.imageUrl;
                     } else {
                         resultImage.onload = () => {
                             resultArea.classList.add('hidden');
@@ -1935,22 +2381,10 @@
                             }, 1500);
                         };
                         
-                        resultImage.src = base64Image || imageUrl;
+                        resultImage.src = result.base64Image || result.imageUrl;
                     }
                     
                     return;
-                }
-                
-                if (isPainting && currentWaitAttempt < MAX_WAIT_ATTEMPTS) {
-                    currentWaitAttempt++;
-                    statusMessage.textContent = `AI仍在绘制图案，将继续等待 (${currentWaitAttempt}/${MAX_WAIT_ATTEMPTS})`;
-                    updateProgress(60 + (currentWaitAttempt / MAX_WAIT_ATTEMPTS) * 20);
-                    
-                    setTimeout(() => {
-                        checkProcessingResult(sessionId);
-                    }, CHECK_RESULT_INTERVAL);
-                } else {
-                    throw new Error(`经过多次尝试仍未获取到有效图片地址。\n\n最后响应: ${fullResponse.substring(0, 200)}...`);
                 }
                 
             } catch (error) {
@@ -2034,283 +2468,165 @@
             });
         }
 
-        // 调用图案提取API - 支持多图上传的Gemini API格式
-        async function callPatternExtractionAPI(messages, signal, sessionId) {
-            statusMessage.textContent = '正在分析图片内容...';
-
-            // 构建请求参数 - 符合Gemini API格式
-            const payload = {
-                "model": selectedModel,
-                "messages": messages,
-                "stream": true  // 启用流式响应
-            };
-
-            try {
-                const response = await fetch(API_ENDPOINT, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${ACCESS_PASSWORD}`
-                    },
-                    body: JSON.stringify(payload),
-                    signal: signal
-                });
-
-                if (response.status === 401) {
-                    throw new Error(`API请求失败: Unauthorized（状态码：401）`);
-                }
-                
-                if (response.status === 503) {
-                    const errorDetails = await response.text();
-                    if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
-                        throw new Error(`API请求失败: Service Unavailable（状态码：503）\n${errorDetails}`);
-                    }
-                }
-
-                if (!response.ok) {
-                    let errorDetails = await response.text();
-                    
-                    try {
-                        const errorJson = JSON.parse(errorDetails);
-                        errorDetails = errorJson.error?.message || errorDetails;
-                    } catch (e) {
-                        // 非JSON格式的错误信息
-                    }
-                    
-                    throw new Error(`API请求失败: ${response.statusText}（状态码：${response.status}）\n${errorDetails}`);
-                }
-
-                // 处理流式响应
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let content = '';
-                let fullStreamContent = '';
-                let receivedPaintingStatus = false;
-                
-                statusMessage.textContent = '正在接收结果...';
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    const chunk = decoder.decode(value, { stream: true });
-                    content += chunk;
-                    fullStreamContent += chunk;
-                    
-                    if (!receivedPaintingStatus && chunk.includes('🖌️正在绘画')) {
-                        receivedPaintingStatus = true;
-                        statusMessage.textContent = 'AI正在生成图案...';
-                        paintingProgress.style.display = 'block';
-                        startPaintingProgressSimulation();
-                    }
-                    
-                    updateProgress(30 + Math.min(40, Math.floor((content.length / 1000) * 40)));
-                }
-                
-                const lines = content.split('\n').filter(line => line.trim() !== '');
-                let fullResponse = '';
-                
-                for (const line of lines) {
-                    const data = line.replace(/^data: /, '');
-                    if (data === '[DONE]') break;
-                    
-                    try {
-                        const json = JSON.parse(data);
-                        if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
-                            fullResponse += json.choices[0].delta.content;
-                        }
-                    } catch (e) {
-                        console.warn('解析流式数据失败:', e);
-                    }
-                }
-                
-                // 提取图片URL或Base64
-                const extractedData = extractImageData(fullResponse);
-                const imageUrl = extractedData.imageUrl;
-                const base64Image = extractedData.base64Image;
-
-                // 检查是否仍在绘画中
-                const isPainting = fullResponse.includes('🖌️正在绘画') || 
-                                  fullResponse.includes('仍在处理') ||
-                                  fullResponse.includes('继续绘画');
-
-                if (!imageUrl && !base64Image && isPainting) {
-                    return { isPainting: true };
-                }
-
-                if (!imageUrl && !base64Image) {
-                    console.error("无法提取图片URL或Base64，原始响应内容:", fullResponse);
-                    throw new Error(`API返回内容中未找到有效的图片地址: ${fullResponse.substring(0, 200)}...`);
-                }
-
-                return { imageUrl: imageUrl, base64Image: base64Image };
-            } catch (error) {
-                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                    throw new Error(`无法连接到API服务器: ${error.message}\n请检查API地址是否正确或网络连接是否正常`);
-                }
-                throw error;
-            }
-        }
-
         // 增强的图片数据提取函数
-function extractImageData(content) {
-    // 1. 首先尝试提取Base64数据（改进正则表达式）
-    const base64Patterns = [
-        // 模式1: 标准Base64格式
-        /data:image\/(png|jpeg|jpg|gif|webp);base64,([a-zA-Z0-9+/=\s]+)/i,
-        // 模式2: 可能包含换行的Base64
-        /data:image\/[^;]+;base64,([a-zA-Z0-9+/=\s]+)/i,
-        // 模式3: 没有data:image前缀的Base64
-        /(?:^|\s)([a-zA-Z0-9+/]{100,}={0,2})(?:\s|$)/,
-    ];
-    
-    for (const pattern of base64Patterns) {
-        const match = content.match(pattern);
-        if (match && match[0]) {
-            let base64Data = match[0];
-            // 如果是完整的data:image格式
-            if (base64Data.startsWith('data:image')) {
-                // 移除可能的多余字符和空白
-                base64Data = base64Data.replace(/\s/g, '');
-                // 检查Base64长度是否合理（至少几百个字符）
-                if (base64Data.length > 500) {
-                    return { imageUrl: null, base64Image: base64Data };
-                }
-            } else if (match[1] && match[1].length > 500) {
-                // 对于纯Base64，尝试构建完整格式
-                // 根据常见格式猜测MIME类型
-                let mimeType = 'image/png';
-                if (content.includes('jpeg') || content.includes('jpg')) {
-                    mimeType = 'image/jpeg';
-                } else if (content.includes('webp')) {
-                    mimeType = 'image/webp';
-                }
-                const fullBase64 = `data:${mimeType};base64,${match[1].replace(/\s/g, '')}`;
-                return { imageUrl: null, base64Image: fullBase64 };
-            }
-        }
-    }
-    
-    // 2. 移除所有绘画状态信息
-    let cleanedContent = content.replace(/^>.*?(🖌️|正在绘画).*?(?=\n|$)/gmi, '').trim();
-    
-    // 3. 移除所有可能的状态提示文本
-    const statusPatterns = [
-        /正在生成图片.../gi,
-        /正在处理您的请求.../gi,
-        /请稍候.../gi,
-        /绘画中.../gi,
-        /仍在处理.../gi,
-        /继续绘画.../gi
-    ];
-    
-    statusPatterns.forEach(pattern => {
-        cleanedContent = cleanedContent.replace(pattern, '').trim();
-    });
-    
-    // 4. 移除所有可能的代码块标记
-    cleanedContent = cleanedContent
-        .replace(/`/g, '')
-        .replace(/^json\s*/i, '')
-        .replace(/^```.*?```$/gs, '')
-        .replace(/^<ImageHere>$/, '');
-    
-    // 5. 再次尝试提取Base64编码（从清理后的内容）
-    const base64Match = cleanedContent.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
-    if (base64Match && base64Match[0]) {
-        return { imageUrl: null, base64Image: base64Match[0] };
-    }
-    
-    // 6. 尝试从Markdown图片格式中提取URL
-    const markdownImageMatch = cleanedContent.match(/!\[.*?\]\((https?:\/\/[^\)]+\.(jpg|jpeg|png|gif|webp))\)/i);
-    if (markdownImageMatch && markdownImageMatch[1]) {
-        return { imageUrl: markdownImageMatch[1], base64Image: null };
-    }
-    
-    // 7. 尝试提取Markdown链接格式的图片URL
-    const markdownLinkMatch = cleanedContent.match(/\[.*?\]\((https?:\/\/filesystem\.site\/[^)]+\.(jpg|jpeg|png|gif|webp)[^)]*)\)/i);
-    if (markdownLinkMatch && markdownLinkMatch[1]) {
-        return { imageUrl: markdownLinkMatch[1], base64Image: null };
-    }
-    
-    // 8. 尝试直接提取URL
-    const urlMatch = cleanedContent.match(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/i);
-    if (urlMatch && urlMatch[0]) {
-        return { imageUrl: urlMatch[0], base64Image: null };
-    }
-    
-    // 9. 检查内容是否为有效的URL
-    if (isValidUrl(cleanedContent) && cleanedContent.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-        return { imageUrl: cleanedContent, base64Image: null };
-    }
-    
-    // 10. 检查内容是否为JSON
-    try {
-        const jsonData = JSON.parse(cleanedContent);
-        const possibleFields = ['image', 'url', 'image_url', 'result', 'output'];
-        for (const field of possibleFields) {
-            if (jsonData[field]) {
-                if (jsonData[field].startsWith('data:image/') && jsonData[field].includes('base64,')) {
-                    return { imageUrl: null, base64Image: jsonData[field] };
-                }
-                if (isValidUrl(jsonData[field]) && jsonData[field].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                    return { imageUrl: jsonData[field], base64Image: null };
-                }
-            }
-        }
-        
-        if (jsonData.images && Array.isArray(jsonData.images)) {
-            for (const imgData of jsonData.images) {
-                if (typeof imgData === 'string' && imgData.startsWith('data:image/') && imgData.includes('base64,')) {
-                    return { imageUrl: null, base64Image: imgData };
-                }
-                if (typeof imgData === 'string' && isValidUrl(imgData) && imgData.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
-                    return { imageUrl: imgData, base64Image: null };
-                }
-            }
-        }
-        
-        if (Array.isArray(jsonData)) {
-            for (const item of jsonData) {
-                if (typeof item === 'string') {
-                    if (item.startsWith('data:image/') && item.includes('base64,')) {
-                        return { imageUrl: null, base64Image: item };
-                    }
-                    if (isValidUrl(item) && item.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                        return { imageUrl: item, base64Image: null };
+        function extractImageData(content) {
+            // 1. 首先尝试提取Base64数据（改进正则表达式）
+            const base64Patterns = [
+                // 模式1: 标准Base64格式
+                /data:image\/(png|jpeg|jpg|gif|webp);base64,([a-zA-Z0-9+/=\s]+)/i,
+                // 模式2: 可能包含换行的Base64
+                /data:image\/[^;]+;base64,([a-zA-Z0-9+/=\s]+)/i,
+                // 模式3: 没有data:image前缀的Base64
+                /(?:^|\s)([a-zA-Z0-9+/]{100,}={0,2})(?:\s|$)/,
+            ];
+            
+            for (const pattern of base64Patterns) {
+                const match = content.match(pattern);
+                if (match && match[0]) {
+                    let base64Data = match[0];
+                    // 如果是完整的data:image格式
+                    if (base64Data.startsWith('data:image')) {
+                        // 移除可能的多余字符和空白
+                        base64Data = base64Data.replace(/\s/g, '');
+                        // 检查Base64长度是否合理（至少几百个字符）
+                        if (base64Data.length > 500) {
+                            return { imageUrl: null, base64Image: base64Data };
+                        }
+                    } else if (match[1] && match[1].length > 500) {
+                        // 对于纯Base64，尝试构建完整格式
+                        // 根据常见格式猜测MIME类型
+                        let mimeType = 'image/png';
+                        if (content.includes('jpeg') || content.includes('jpg')) {
+                            mimeType = 'image/jpeg';
+                        } else if (content.includes('webp')) {
+                            mimeType = 'image/webp';
+                        }
+                        const fullBase64 = `data:${mimeType};base64,${match[1].replace(/\s/g, '')}`;
+                        return { imageUrl: null, base64Image: fullBase64 };
                     }
                 }
-                if (typeof item === 'object' && item !== null) {
-                    for (const key in item) {
-                        if (typeof item[key] === 'string') {
-                            if (item[key].startsWith('data:image/') && item[key].includes('base64,')) {
-                                return { imageUrl: null, base64Image: item[key] };
+            }
+            
+            // 2. 移除所有绘画状态信息
+            let cleanedContent = content.replace(/^>.*?(🖌️|正在绘画).*?(?=\n|$)/gmi, '').trim();
+            
+            // 3. 移除所有可能的状态提示文本
+            const statusPatterns = [
+                /正在生成图片.../gi,
+                /正在处理您的请求.../gi,
+                /请稍候.../gi,
+                /绘画中.../gi,
+                /仍在处理.../gi,
+                /继续绘画.../gi
+            ];
+            
+            statusPatterns.forEach(pattern => {
+                cleanedContent = cleanedContent.replace(pattern, '').trim();
+            });
+            
+            // 4. 移除所有可能的代码块标记
+            cleanedContent = cleanedContent
+                .replace(/`/g, '')
+                .replace(/^json\s*/i, '')
+                .replace(/^```.*?```$/gs, '')
+                .replace(/^<ImageHere>$/, '');
+            
+            // 5. 再次尝试提取Base64编码（从清理后的内容）
+            const base64Match = cleanedContent.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
+            if (base64Match && base64Match[0]) {
+                return { imageUrl: null, base64Image: base64Match[0] };
+            }
+            
+            // 6. 尝试从Markdown图片格式中提取URL
+            const markdownImageMatch = cleanedContent.match(/!\[.*?\]\((https?:\/\/[^\)]+\.(jpg|jpeg|png|gif|webp))\)/i);
+            if (markdownImageMatch && markdownImageMatch[1]) {
+                return { imageUrl: markdownImageMatch[1], base64Image: null };
+            }
+            
+            // 7. 尝试提取Markdown链接格式的图片URL
+            const markdownLinkMatch = cleanedContent.match(/\[.*?\]\((https?:\/\/filesystem\.site\/[^)]+\.(jpg|jpeg|png|gif|webp)[^)]*)\)/i);
+            if (markdownLinkMatch && markdownLinkMatch[1]) {
+                return { imageUrl: markdownLinkMatch[1], base64Image: null };
+            }
+            
+            // 8. 尝试直接提取URL
+            const urlMatch = cleanedContent.match(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/i);
+            if (urlMatch && urlMatch[0]) {
+                return { imageUrl: urlMatch[0], base64Image: null };
+            }
+            
+            // 9. 检查内容是否为有效的URL
+            if (isValidUrl(cleanedContent) && cleanedContent.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                return { imageUrl: cleanedContent, base64Image: null };
+            }
+            
+            // 10. 检查内容是否为JSON
+            try {
+                const jsonData = JSON.parse(cleanedContent);
+                const possibleFields = ['image', 'url', 'image_url', 'result', 'output'];
+                for (const field of possibleFields) {
+                    if (jsonData[field]) {
+                        if (jsonData[field].startsWith('data:image/') && jsonData[field].includes('base64,')) {
+                            return { imageUrl: null, base64Image: jsonData[field] };
+                        }
+                        if (isValidUrl(jsonData[field]) && jsonData[field].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                            return { imageUrl: jsonData[field], base64Image: null };
+                        }
+                    }
+                }
+                
+                if (jsonData.images && Array.isArray(jsonData.images)) {
+                    for (const imgData of jsonData.images) {
+                        if (typeof imgData === 'string' && imgData.startsWith('data:image/') && imgData.includes('base64,')) {
+                            return { imageUrl: null, base64Image: imgData };
+                        }
+                        if (typeof imgData === 'string' && isValidUrl(imgData) && imgData.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
+                            return { imageUrl: imgData, base64Image: null };
+                        }
+                    }
+                }
+                
+                if (Array.isArray(jsonData)) {
+                    for (const item of jsonData) {
+                        if (typeof item === 'string') {
+                            if (item.startsWith('data:image/') && item.includes('base64,')) {
+                                return { imageUrl: null, base64Image: item };
                             }
-                            if (isValidUrl(item[key]) && item[key].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                                return { imageUrl: item[key], base64Image: null };
+                            if (isValidUrl(item) && item.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                                return { imageUrl: item, base64Image: null };
+                            }
+                        }
+                        if (typeof item === 'object' && item !== null) {
+                            for (const key in item) {
+                                if (typeof item[key] === 'string') {
+                                    if (item[key].startsWith('data:image/') && item[key].includes('base64,')) {
+                                        return { imageUrl: null, base64Image: item[key] };
+                                    }
+                                    if (isValidUrl(item[key]) && item[key].match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                                        return { imageUrl: item[key], base64Image: null };
+                                    }
+                                }
                             }
                         }
                     }
                 }
+            } catch (e) {
+                // 不是JSON格式
             }
+            
+            // 11. 作为最后的尝试，在原始内容中搜索
+            const rawBase64Match = content.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
+            if (rawBase64Match && rawBase64Match[0]) {
+                return { imageUrl: null, base64Image: rawBase64Match[0] };
+            }
+            
+            const rawUrlMatch = content.match(/(https?:\/\/[^`\s]+\.(jpg|jpeg|png|gif|webp))/i);
+            if (rawUrlMatch && rawUrlMatch[0]) {
+                return { imageUrl: rawUrlMatch[0], base64Image: null };
+            }
+            
+            return { imageUrl: null, base64Image: null };
         }
-    } catch (e) {
-        // 不是JSON格式
-    }
-    
-    // 11. 作为最后的尝试，在原始内容中搜索
-    const rawBase64Match = content.match(/data:image\/(png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=]+/i);
-    if (rawBase64Match && rawBase64Match[0]) {
-        return { imageUrl: null, base64Image: rawBase64Match[0] };
-    }
-    
-    const rawUrlMatch = content.match(/(https?:\/\/[^`\s]+\.(jpg|jpeg|png|gif|webp))/i);
-    if (rawUrlMatch && rawUrlMatch[0]) {
-        return { imageUrl: rawUrlMatch[0], base64Image: null };
-    }
-    
-    return { imageUrl: null, base64Image: null };
-}
 
         // 验证URL有效性
         function isValidUrl(string) {
@@ -2323,11 +2639,11 @@ function extractImageData(content) {
         }
 
         // 下载图片功能
-        downloadBtn.addEventListener('click', async () => {
+        downloadBtn.addEventListener('click', async function() {
             await downloadImage(resultImage.src, "pattern_result");
         });
         
-        multiDownloadBtn.addEventListener('click', async () => {
+        multiDownloadBtn.addEventListener('click', async function() {
             await downloadImage(multiResultImage.src, "advanced_pattern_result");
         });
         
@@ -2337,7 +2653,6 @@ function extractImageData(content) {
                 this.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> 下载中...';
                 this.disabled = true;
 
-                let imageSrc = arguments[0];
                 const timestamp = new Date().getTime();
                 let extension = 'png';
                 if (imageSrc.includes('data:image/jpeg') || imageSrc.includes('.jpg') || imageSrc.includes('.jpeg')) {
@@ -2345,7 +2660,7 @@ function extractImageData(content) {
                 } else if (imageSrc.includes('data:image/webp') || imageSrc.includes('.webp')) {
                     extension = 'webp';
                 }
-                const filename = `${arguments[1]}_${timestamp}.${extension}`;
+                const filename = `${prefix}_${timestamp}.${extension}`;
 
                 if (imageSrc.startsWith('data:')) {
                     const link = document.createElement('a');
@@ -2446,8 +2761,16 @@ function extractImageData(content) {
             multiReprocessBtn.disabled = false;
         }
 
-        // 添加到历史记录
+        // 添加到历史记录 - 修复问题2：防止重复添加相同图片
         function addToHistory(imageUrl) {
+            // 检查是否已经有相同图片在历史记录中
+            const existingImages = historyContainer.querySelectorAll('img');
+            for (const img of existingImages) {
+                if (img.src === imageUrl) {
+                    return; // 如果已经存在，不重复添加
+                }
+            }
+            
             const placeholder = historyContainer.querySelector('.text-center.text-gray-500');
             if (placeholder) {
                 historyContainer.removeChild(placeholder);
