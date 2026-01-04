@@ -876,8 +876,8 @@
         const API_ENDPOINT_CHAT = "https://apius.tu-zi.com/v1/chat/completions";
         const API_ENDPOINT_IMAGE_GENERATIONS = "https://api.tu-zi.com/v1/images/generations"; // 新增：图片生成API端点
         const API_TIMEOUT = 1200000; // 20分钟超时，给AI足够的绘画时间
-        const PAINTING_PROGRESS_INTERVAL = 5000;
-        const CHECK_RESULT_INTERVAL = 30000;
+        const PAINTING_PROGRESS_INTERVAL = 1000;
+        const CHECK_RESULT_INTERVAL = 1000;
         const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 
         // 四种处理指令的详细描述
@@ -2879,3 +2879,4 @@
     </script>
 </body>
 </html>
+
