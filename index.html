@@ -2638,113 +2638,114 @@
             }
         }
 
-        // 下载图片功能
-        downloadBtn.addEventListener('click', async function() {
-            await downloadImage(resultImage.src, "pattern_result");
-        });
-        
-        multiDownloadBtn.addEventListener('click', async function() {
-            await downloadImage(multiResultImage.src, "advanced_pattern_result");
-        });
-        
-        async function downloadImage(imageSrc, prefix) {
-            try {
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> 下载中...';
-                this.disabled = true;
+// 下载图片功能
+downloadBtn.addEventListener('click', async function() {
+    await downloadImage.call(this, resultImage.src, "pattern_result");
+});
 
-                const timestamp = new Date().getTime();
-                let extension = 'png';
-                if (imageSrc.includes('data:image/jpeg') || imageSrc.includes('.jpg') || imageSrc.includes('.jpeg')) {
-                    extension = 'jpg';
-                } else if (imageSrc.includes('data:image/webp') || imageSrc.includes('.webp')) {
-                    extension = 'webp';
-                }
-                const filename = `${prefix}_${timestamp}.${extension}`;
+multiDownloadBtn.addEventListener('click', async function() {
+    await downloadImage.call(this, multiResultImage.src, "advanced_pattern_result");
+});
 
-                if (imageSrc.startsWith('data:')) {
-                    const link = document.createElement('a');
-                    link.href = imageSrc;
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } else if (imageSrc.startsWith('http')) {
-                    try {
-                        let response = await fetch(imageSrc);
-                        
-                        if (!response.ok) {
-                            response = await fetch(CORS_PROXY + imageSrc);
-                        }
-                        
-                        if (!response.ok) {
-                            throw new Error(`图片下载失败: ${response.statusText}`);
-                        }
-                        
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(url);
-                    } catch (directError) {
-                        try {
-                            const img = new Image();
-                            img.crossOrigin = "anonymous";
-                            
-                            await new Promise((resolve, reject) => {
-                                img.onload = resolve;
-                                img.onerror = reject;
-                                img.src = imageSrc + (imageSrc.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-                            });
-                            
-                            const canvas = document.createElement('canvas');
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0);
-                            
-                            const dataUrl = canvas.toDataURL(`image/${extension}`);
-                            
-                            const link = document.createElement('a');
-                            link.href = dataUrl;
-                            link.download = filename;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        } catch (canvasError) {
-                            throw new Error(`自动下载失败: ${directError.message}\n\n您可以右键点击图片选择"图片另存为"手动保存`);
-                        }
-                    }
-                } else {
-                    const link = document.createElement('a');
-                    link.href = imageSrc;
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-                
-                this.innerHTML = '<i class="fa fa-check mr-1"></i> 已下载';
-                this.classList.add('bg-green-600');
-                
-                setTimeout(() => {
-                    this.innerHTML = originalText;
-                    this.classList.remove('bg-green-600');
-                    this.disabled = false;
-                }, 2000);
-            } catch (err) {
-                console.error('图片下载失败:', err);
-                this.innerHTML = '<i class="fa fa-download mr-1"></i> 下载图片';
-                this.disabled = false;
-                
-                showError(`下载图片失败: ${err.message}`);
-            }
+async function downloadImage(imageSrc, prefix) {
+    const button = this; // 保存按钮引用
+    try {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> 下载中...';
+        button.disabled = true;
+
+        const timestamp = new Date().getTime();
+        let extension = 'png';
+        if (imageSrc.includes('data:image/jpeg') || imageSrc.includes('.jpg') || imageSrc.includes('.jpeg')) {
+            extension = 'jpg';
+        } else if (imageSrc.includes('data:image/webp') || imageSrc.includes('.webp')) {
+            extension = 'webp';
         }
+        const filename = `${prefix}_${timestamp}.${extension}`;
+
+        if (imageSrc.startsWith('data:')) {
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else if (imageSrc.startsWith('http')) {
+            try {
+                let response = await fetch(imageSrc);
+                
+                if (!response.ok) {
+                    response = await fetch(CORS_PROXY + imageSrc);
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`图片下载失败: ${response.statusText}`);
+                }
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (directError) {
+                try {
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        img.src = imageSrc + (imageSrc.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                    });
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const dataUrl = canvas.toDataURL(`image/${extension}`);
+                    
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (canvasError) {
+                    throw new Error(`自动下载失败: ${directError.message}\n\n您可以右键点击图片选择"图片另存为"手动保存`);
+                }
+            }
+        } else {
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        button.innerHTML = '<i class="fa fa-check mr-1"></i> 已下载';
+        button.classList.add('bg-green-600');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('bg-green-600');
+            button.disabled = false;
+        }, 2000);
+    } catch (err) {
+        console.error('图片下载失败:', err);
+        button.innerHTML = '<i class="fa fa-download mr-1"></i> 下载图片';
+        button.disabled = false;
+        
+        showError(`下载图片失败: ${err.message}`);
+    }
+}
 
         // 显示错误信息
         function showError(message) {
