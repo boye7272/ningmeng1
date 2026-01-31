@@ -2241,7 +2241,7 @@
 
                         const data = await response.json();
                         const status = data.status || 'unknown';
-                        const progress = data.progress || 0;
+                        const progress = data.progress || 50;
                         
                         // 更新状态显示
                         showTaskStatus(status, progress);
