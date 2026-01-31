@@ -193,6 +193,28 @@
                 object-fit: contain;
                 background-color: #f8f9fa;
             }
+            /* 异步处理状态 */
+            .async-status-queued {
+                background-color: #FEF3C7;
+                color: #92400E;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+            }
+            .async-status-in-progress {
+                background-color: #DBEAFE;
+                color: #1E40AF;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+            }
+            .async-status-completed {
+                background-color: #D1FAE5;
+                color: #065F46;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -272,8 +294,8 @@
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">网站公告</h3>
             <div class="text-gray-600 mb-6 text-left">
-                <p class="mb-2">4k清晰，可以优先选择4k</p>
-              <p class="mb-2">但由于不稳定，如果4k失败了请选择2k</p>
+                <p class="mb-2">更新了一个更稳定的处理方式，一样的操作方式。</p>
+              <p class="mb-2">选择进一步处理方式比例应该选择自动。</p>
               <p class="mb-2">有什么问题随时微信群@群主</p>
             </div>
             <div class="flex justify-center">
@@ -344,21 +366,44 @@
                     </h3>
                     <!-- 修改：将处理方式改为一排显示 -->
                     <div class="flex flex-wrap gap-4" id="instructions-container">
-                        <!-- 新增：新图案提取（选比例） -->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="new-ratio" data-api-type="image-generations">
-                            <h4 class="font-medium text-gray-800 mb-2">新图案提取（选比例）</h4>
-                            <p class="text-sm text-gray-600">将图案处理为四方连续的循环图案或定位花，适合大面积印花使用，可选择输出比例。</p>
+                        <!-- 异步图案提取（选比例） -->
+                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="async-pattern" data-api-type="video-async">
+                            <h4 class="font-medium text-gray-800 mb-2">图案提取（选比例）稳定</h4>
+                            <p class="text-sm text-gray-600">选择进一步处理去绣花，补回位、转风格，比例应该选择自动。</p>
                             
-                            <!-- 指令类型选择 -->
-                            <div id="new-ratio-instruction-options" class="mt-4">
+                            <div id="async-pattern-options" class="mt-4">
+                                <!-- 指令类型选择 -->
                                 <div class="mb-3">
-                                    <p class="text-sm text-gray-600 mb-1">图案类型：</p>
+                                    <p class="text-sm text-gray-600 mb-1">指令类型：</p>
                                     <div class="flex gap-2">
-                                        <button type="button" id="instruction-repeat" class="instruction-type-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active">
-                                            循环图
+                                        <button type="button" id="async-pattern-extract" class="async-pattern-type-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-instruction-type="extract">
+                                            图案提取
                                         </button>
-                                        <button type="button" id="instruction-position" class="instruction-type-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
-                                            定位花
+                                        <button type="button" id="async-pattern-advanced" class="async-pattern-type-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-instruction-type="advanced">
+                                            进一步处理
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- 自定义指令输入框（默认隐藏） -->
+                                <div id="async-custom-instruction-container" class="hidden mb-3">
+                                    <p class="text-sm text-gray-600 mb-1">请输入处理指令：</p>
+                                    <textarea id="async-custom-instruction" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-primary focus:border-primary transition-custom" placeholder="请输入提示词，例如：将透明位置补充完整，过渡要自然。"></textarea>
+                                    <p id="async-instruction-required" class="mt-1 text-xs text-red-500 hidden">请输入处理指令</p>
+                                </div>
+                                
+                                <!-- 画质选择 -->
+                                <div class="mb-3">
+                                    <p class="text-sm text-gray-600 mb-1">画质选择：</p>
+                                    <div class="flex gap-2">
+                                        <button type="button" id="async-quality-1k" class="async-quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview-async">
+                                            1K
+                                        </button>
+                                        <button type="button" id="async-quality-2k" class="async-quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k-async">
+                                            2K
+                                        </button>
+                                        <button type="button" id="async-quality-4k" class="async-quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k-async">
+                                            4K
                                         </button>
                                     </div>
                                 </div>
@@ -367,59 +412,132 @@
                                 <div>
                                     <p class="text-sm text-gray-600 mb-1">输出比例：</p>
                                     <div class="flex gap-2 flex-wrap">
-                                        <button type="button" id="new-ratio-16x9" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
-                                            16:9
+                                        <button type="button" id="async-ratio-auto" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="">
+                                            自动
                                         </button>
-                                        <button type="button" id="new-ratio-3x4" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
-                                            3:4
-                                        </button>
-                                        <button type="button" id="new-ratio-1x1" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active">
+                                        <button type="button" id="async-ratio-1x1" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-ratio="1:1">
                                             1:1
                                         </button>
-                                        <button type="button" id="new-ratio-4x3" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
-                                            4:3
-                                        </button>
-                                        <button type="button" id="new-ratio-21x9" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
-                                            21:9
-                                        </button>
-                                        <button type="button" id="new-ratio-4x5" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
-                                            4:5
-                                        </button>
-                                        <button type="button" id="new-ratio-2x3" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                                        <button type="button" id="async-ratio-2x3" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="2:3">
                                             2:3
                                         </button>
-                                        <button type="button" id="new-ratio-5x4" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
-                                            5:4
-                                        </button>
-                                        <button type="button" id="new-ratio-3x2" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                                        <button type="button" id="async-ratio-3x2" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="3:2">
                                             3:2
                                         </button>
-                                        <button type="button" id="new-ratio-9x16" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                                        <button type="button" id="async-ratio-3x4" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="3:4">
+                                            3:4
+                                        </button>
+                                        <button type="button" id="async-ratio-4x3" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="4:3">
+                                            4:3
+                                        </button>
+                                        <button type="button" id="async-ratio-4x5" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="4:5">
+                                            4:5
+                                        </button>
+                                        <button type="button" id="async-ratio-5x4" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="5:4">
+                                            5:4
+                                        </button>
+                                        <button type="button" id="async-ratio-9x16" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="9:16">
                                             9:16
                                         </button>
-                                    </div>
-                                    <p id="new-ratio-required" class="mt-1 text-xs text-red-500 hidden">请选择输出比例</p>
-                                </div>
-                                
-                                <!-- 新增：画质选择 -->
-                                <div class="mt-3">
-                                    <p class="text-sm text-gray-600 mb-1">画质选择：</p>
-                                    <div class="flex gap-2">
-                                        <button type="button" id="new-ratio-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
-                                            1K
+                                        <button type="button" id="async-ratio-16x9" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="16:9">
+                                            16:9
                                         </button>
-                                        <button type="button" id="new-ratio-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
-                                            2K
-                                        </button>
-                                        <button type="button" id="new-ratio-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
-                                            4K
+                                        <button type="button" id="async-ratio-21x9" class="async-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="21:9">
+                                            21:9
                                         </button>
                                     </div>
+                                    <p id="async-ratio-required" class="mt-1 text-xs text-red-500 hidden">请选择输出比例</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 新增指令选项3 - 矢量风格图案 -->
+                        <!-- 合并后的新图案提取与进一步处理 -->
+<div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="new-ratio-advanced" data-api-type="image-generations">
+    <h4 class="font-medium text-gray-800 mb-2">图案提取（选比例）备用</h4>
+    <p class="text-sm text-gray-600">选择进一步处理去绣花，补回位、转风格，比例应该选择自动。</p>
+    
+    <!-- 指令类型选择 -->
+    <div id="new-ratio-advanced-options" class="mt-4">
+        <div class="mb-3">
+            <p class="text-sm text-gray-600 mb-1">指令类型：</p>
+            <div class="flex gap-2">
+                <button type="button" id="instruction-pattern-extract" class="instruction-type-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-instruction-type="pattern-extract">
+                    图案提取
+                </button>
+                <button type="button" id="instruction-advanced" class="instruction-type-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-instruction-type="advanced">
+                    进一步处理
+                </button>
+            </div>
+        </div>
+        
+        <!-- 自定义指令输入框（默认隐藏） -->
+        <div id="custom-instruction-container" class="hidden mb-3">
+            <p class="text-sm text-gray-600 mb-1">请输入处理指令：</p>
+            <textarea id="custom-instruction" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-primary focus:border-primary transition-custom" placeholder="请输入提示词，例如：将透明位置补充完整，过渡要自然。"></textarea>
+            <p id="instruction-required" class="mt-1 text-xs text-red-500 hidden">请输入处理指令</p>
+        </div>
+        
+        <!-- 修改：画质选择移到上面 -->
+        <div class="mt-3 mb-3">
+            <p class="text-sm text-gray-600 mb-1">画质选择：</p>
+            <div class="flex gap-2">
+                <button type="button" id="new-ratio-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
+                    1K
+                </button>
+                <button type="button" id="new-ratio-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
+                    2K
+                </button>
+                <button type="button" id="new-ratio-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
+                    4K
+                </button>
+            </div>
+        </div>
+        
+        <!-- 修改：尺寸选择移到下面，并重新排列 -->
+        <div class="mb-3">
+            <p class="text-sm text-gray-600 mb-1">输出比例：</p>
+            <div class="flex gap-2 flex-wrap">
+                <!-- 按照指定顺序重新排列 -->
+                <button type="button" id="new-ratio-auto" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-ratio="">
+                    自动
+                </button>
+                <button type="button" id="new-ratio-1x1" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active">
+                    1:1
+                </button>
+                <button type="button" id="new-ratio-2x3" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    2:3
+                </button>
+                <button type="button" id="new-ratio-3x2" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    3:2
+                </button>
+                <button type="button" id="new-ratio-3x4" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    3:4
+                </button>
+                <button type="button" id="new-ratio-4x3" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    4:3
+                </button>
+                <button type="button" id="new-ratio-4x5" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    4:5
+                </button>
+                <button type="button" id="new-ratio-5x4" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    5:4
+                </button>
+                <button type="button" id="new-ratio-9x16" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    9:16
+                </button>
+                <button type="button" id="new-ratio-16x9" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    16:9
+                </button>
+                <button type="button" id="new-ratio-21x9" class="new-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom">
+                    21:9
+                </button>
+            </div>
+            <p id="new-ratio-required" class="mt-1 text-xs text-red-500 hidden">请选择输出比例</p>
+        </div>
+    </div>
+</div>
+
+                        <!-- 矢量风格图案 -->
                         <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="vector" data-api-type="chat">
                             <h4 class="font-medium text-gray-800 mb-2">矢量风格图案</h4>
                             <p class="text-sm text-gray-600">比如球服、徽章、logo等图案的提取，可以选择矢量风格输出。按截图比例选择输出比例。出图时间会稍慢一些、图案更清晰！大概3分钟出一张图。不适合花卉等密集花型提取</p>
@@ -452,34 +570,6 @@
                                         </button>
                                     </div>
                                     <p id="ratio-required" class="mt-1 text-xs text-red-500 hidden">请选择输出比例</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 新增指令选项4 - 进一步处理-->
-                        <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="advanced" data-api-type="image-generations">
-                            <h4 class="font-medium text-gray-800 mb-2">进一步处理</h4>
-                            <p class="text-sm text-gray-600">换背景、去水印、去绣花、换风格(3D,刺绣,水彩等）、花型图案换色、服装换色换花型、模特换装试衣等都可以在这个处理方式实现</p>
-                            <!-- 自定义指令输入框 -->
-                            <div id="advanced-options" class="mt-4">
-                                <p class="text-sm text-gray-600 mb-1">请输入处理指令：</p>
-                                <textarea id="custom-instruction" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-primary focus:border-primary transition-custom" placeholder="例如：例如:提取花卉图案，将背景换成白色/提取花卉图案，去除绣花图案/把图一衣服上的图案换成图二的图案。"></textarea>
-                                <p id="instruction-required" class="mt-1 text-xs text-red-500 hidden">请输入处理指令</p>
-                                
-                                <!-- 新增：画质选择 -->
-                                <div class="mt-3">
-                                    <p class="text-sm text-gray-600 mb-1">画质选择：</p>
-                                    <div class="flex gap-2">
-                                        <button type="button" id="advanced-quality-1k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-quality="1K" data-model="gemini-3-pro-image-preview">
-                                            1K
-                                        </button>
-                                        <button type="button" id="advanced-quality-2k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="2K" data-model="gemini-3-pro-image-preview-2k">
-                                            2K
-                                        </button>
-                                        <button type="button" id="advanced-quality-4k" class="quality-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-quality="4K" data-model="gemini-3-pro-image-preview-4k">
-                                            4K
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -744,15 +834,15 @@
         // 指令选择相关元素
         const instructionOptions = document.querySelectorAll('.instruction-option');
         const vectorOptions = document.getElementById('vector-options');
-        const advancedOptions = document.getElementById('advanced-options');
+        const customInstructionContainer = document.getElementById('custom-instruction-container');
         const customInstructionInput = document.getElementById('custom-instruction');
         const instructionRequired = document.getElementById('instruction-required');
         const styleOptions = document.querySelectorAll('.style-option');
         const ratioOptions = document.querySelectorAll('.ratio-option');
         const ratioRequired = document.getElementById('ratio-required');
         
-        // 新增：新图案提取（选比例）相关元素
-        const newRatioInstructionOptions = document.getElementById('new-ratio-instruction-options');
+        // 新增：合并后的新图案提取与进一步处理相关元素
+        const newRatioAdvancedOptions = document.getElementById('new-ratio-advanced-options');
         const instructionTypeOptions = document.querySelectorAll('.instruction-type-option');
         const newRatioOptions = document.querySelectorAll('.new-ratio-option');
         const newRatioRequired = document.getElementById('new-ratio-required');
@@ -760,19 +850,40 @@
         // 新增：画质选择相关元素
         const qualityOptions = document.querySelectorAll('.quality-option');
         
-        let selectedInstruction = 'new-ratio';
-        let selectedModel = 'gemini-3-pro-image-preview';
-        let selectedApiType = 'image-generations'; // 新增：API类型
+        // 新增：异步图案提取相关元素
+        const asyncPatternTypeOptions = document.querySelectorAll('.async-pattern-type-option');
+        const asyncCustomInstructionInput = document.getElementById('async-custom-instruction');
+        const asyncCustomInstructionContainer = document.getElementById('async-custom-instruction-container');
+        const asyncInstructionRequired = document.getElementById('async-instruction-required');
+        const asyncQualityOptions = document.querySelectorAll('.async-quality-option');
+        const asyncRatioOptions = document.querySelectorAll('.async-ratio-option');
+        const asyncRatioRequired = document.getElementById('async-ratio-required');
+        
+        let selectedInstruction = 'async-pattern'; // 默认选择异步图案提取
+        let selectedModel = 'gemini-3-pro-image-preview-async';
+        let selectedApiType = 'video-async'; // 新增：API类型
         let selectedStyle = [];
         let selectedRatio = null;
-        let customInstruction = '';
         
-        // 新增：新图案提取（选比例）相关变量
-        let selectedInstructionType = 'repeat'; // 'repeat' 或 'position'
+        // 新增：合并后的新图案提取与进一步处理相关变量
+        let selectedInstructionType = 'pattern-extract'; // 'pattern-extract' 或 'advanced'
         let selectedNewRatio = '1x1'; // 默认选择1x1
+        let customInstructionValue = '';
         
         // 新增：画质选择变量
         let selectedQuality = '1K'; // 默认选择1K
+        
+        // 新增：异步图案提取相关变量
+        let selectedAsyncInstructionType = 'extract'; // 'extract' 或 'advanced'
+        let selectedAsyncRatio = '1:1'; // 默认选择1:1
+        let selectedAsyncQuality = '1K'; // 默认选择1K
+        let selectedAsyncModel = 'gemini-3-pro-image-preview-async';
+        let asyncCustomInstructionValue = '';
+        let asyncTaskId = null;
+        let asyncPollingInterval = null;
+        const ASYNC_POLLING_INTERVAL = 5000; // 5秒轮询间隔
+        const VIDEO_API_ENDPOINT = "https://api.tu-zi.com/v1/videos";
+        const ASYNC_MAX_WAIT_TIME = 300000; // 5分钟最大等待时间
         
         // 新增：多图相关变量
         let currentResultImages = []; // 存储当前处理结果的所有图片
@@ -879,9 +990,9 @@
 
         // 四种处理指令的详细描述
         const instructionDetails = {
-            // 新增：新图案提取（选比例）指令 - 用于image/generations API
-            'new-ratio': {
-                'repeat': `把衣服的印花图案平铺开，
+            // 合并后的新图案提取与进一步处理指令
+            'new-ratio-advanced': {
+                'pattern-extract': `把衣服的印花图案平铺开，
 要求：
 1. 保持图案大小、位置、排布不变
 2. 校正图案，还原出图案平整的样子
@@ -890,14 +1001,10 @@
 5. 去掉褶皱，重绘平整
 6. 优化图案主体定位，适合印花使用`,
                 
-                'position': `把衣服的印花图案平铺开，
-要求：
-1. 保持图案大小、位置、排布不变
-2. 校正图案，还原出图案平整的样子
-3. 把不完整的图案绘制完整
-4. 不要改变图案的颜色和风格
-5. 去掉褶皱，重绘平整
-6. 优化图案主体定位，适合印花使用`
+                'advanced': `{customInstruction}
+
+输出格式：
+仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`
             },
 
             vector: `指令：请处理这张图片，将图案做成壁纸。
@@ -912,12 +1019,7 @@
 {ratioOption}
 
 输出格式：
-仅返回一个直接可访问的图片URL，格式为JPG或PNG，不添加任何其他文字或说明。`,
-
-            advanced: `{customInstruction}
-
-输出格式：
-仅返回一个直接可访问的图片URL或Base64编码，格式为JPG或PNG，不添加任何其他文字或说明。`
+仅返回一个直接可访问的图片URL，格式为JPG或PNG，不添加任何其他文字或说明。`
         };
 
         // 画质与模型映射
@@ -927,8 +1029,45 @@
             '4K': 'gemini-3-pro-image-preview-4k'
         };
 
+        // 异步画质与模型映射
+        const asyncQualityModelMap = {
+            '1K': 'gemini-3-pro-image-preview-async',
+            '2K': 'gemini-3-pro-image-preview-2k-async',
+            '4K': 'gemini-3-pro-image-preview-4k-async'
+        };
+
         // 初始状态：处理按钮不可用
         processBtn.disabled = true;
+
+        // 初始化异步图案提取的默认值
+        document.addEventListener('DOMContentLoaded', () => {
+            // 为异步图案提取设置默认值
+            if (document.getElementById('async-pattern-extract')) {
+                document.getElementById('async-pattern-extract').classList.add('option-active');
+            }
+            if (document.getElementById('async-quality-1k')) {
+                document.getElementById('async-quality-1k').classList.add('option-active');
+            }
+            if (document.getElementById('async-ratio-1x1')) {
+                document.getElementById('async-ratio-1x1').classList.add('option-active');
+            }
+            
+            // 为合并后的新图案提取与进一步处理设置默认值
+            if (document.getElementById('instruction-pattern-extract')) {
+                document.getElementById('instruction-pattern-extract').classList.add('option-active');
+            }
+            if (document.getElementById('new-ratio-1x1')) {
+                document.getElementById('new-ratio-1x1').classList.add('option-active');
+            }
+            if (document.getElementById('new-ratio-quality-1k')) {
+                document.getElementById('new-ratio-quality-1k').classList.add('option-active');
+            }
+            
+            // 默认选择第一个指令
+            if (instructionOptions.length > 0) {
+                instructionOptions[0].click();
+            }
+        });
 
         // 弹窗关闭按钮事件
         modalCloseButtons.forEach(button => {
@@ -989,8 +1128,8 @@
                 selectedApiType = option.getAttribute('data-api-type'); // 获取API类型
                 
                 // 根据选择的指令切换图片上传区域
-                if (selectedInstruction === 'advanced') {
-                    // 进一步处理显示多图上传
+                if (selectedInstruction === 'new-ratio-advanced') {
+                    // 合并后的新图案提取与进一步处理显示多图上传
                     singleImageContainer.classList.add('hidden');
                     multiImageContainer.classList.remove('hidden');
                 } else {
@@ -1000,21 +1139,33 @@
                 }
                 
                 // 重置相关选择
-                if (selectedInstruction === 'new-ratio') {
-                    // 新图案提取（选比例）指令
+                if (selectedInstruction === 'async-pattern') {
+                    // 异步图案提取（选比例）指令
                     styleOptions.forEach(opt => opt.classList.remove('option-active'));
                     selectedStyle = [];
                     
                     ratioOptions.forEach(opt => opt.classList.remove('option-active'));
                     selectedRatio = null;
                     
-                    customInstructionInput.value = '';
-                    customInstruction = '';
+                    ratioRequired.classList.add('hidden');
+                    
+                    // 重置新图案提取与进一步处理选项
+                    newRatioRequired.classList.add('hidden');
+                    
+                    // 更新模型为当前异步画质对应的模型
+                    selectedAsyncModel = asyncQualityModelMap[selectedAsyncQuality];
+                    selectedModel = selectedAsyncModel;
+                } else if (selectedInstruction === 'new-ratio-advanced') {
+                    // 合并后的新图案提取与进一步处理指令
+                    styleOptions.forEach(opt => opt.classList.remove('option-active'));
+                    selectedStyle = [];
+                    
+                    ratioOptions.forEach(opt => opt.classList.remove('option-active'));
+                    selectedRatio = null;
                     
                     ratioRequired.classList.add('hidden');
-                    instructionRequired.classList.add('hidden');
                     
-                    // 重置新图案提取（选比例）选项
+                    // 重置新图案提取与进一步处理选项
                     newRatioRequired.classList.add('hidden');
                     
                     // 更新模型为当前画质对应的模型
@@ -1022,29 +1173,13 @@
                 } else if (selectedInstruction === 'vector') {
                     // 矢量风格图案指令
                     customInstructionInput.value = '';
-                    customInstruction = '';
+                    customInstructionValue = '';
                     
                     instructionRequired.classList.add('hidden');
                     
                     ratioRequired.classList.add('hidden');
                     
                     selectedModel = 'gpt-image-1.5';
-                } else if (selectedInstruction === 'advanced') {
-                    // 进一步处理指令
-                    styleOptions.forEach(opt => opt.classList.remove('option-active'));
-                    selectedStyle = [];
-                    
-                    ratioOptions.forEach(opt => opt.classList.remove('option-active'));
-                    selectedRatio = null;
-                    
-                    ratioRequired.classList.add('hidden');
-                    
-                    // 更新模型为当前画质对应的模型
-                    selectedModel = qualityModelMap[selectedQuality];
-                    
-                    setTimeout(() => {
-                        customInstructionInput.focus();
-                    }, 300);
                 }
                 
                 // 验证按钮状态
@@ -1072,25 +1207,111 @@
             });
         });
 
-        // 新增：新图案提取（选比例）指令类型选择逻辑
-        instructionTypeOptions.forEach(option => {
+        // 新增：异步图案提取画质选择逻辑
+        asyncQualityOptions.forEach(option => {
             option.addEventListener('click', () => {
-                instructionTypeOptions.forEach(opt => opt.classList.remove('option-active'));
+                const quality = option.getAttribute('data-quality');
+                const model = option.getAttribute('data-model');
+                
+                // 移除同组画质按钮的活跃状态
+                const parentContainer = option.closest('.instruction-option');
+                const asyncQualityOptionsInGroup = parentContainer.querySelectorAll('.async-quality-option');
+                asyncQualityOptionsInGroup.forEach(opt => opt.classList.remove('option-active'));
+                
+                // 设置当前按钮为活跃状态
                 option.classList.add('option-active');
-                selectedInstructionType = option.id.replace('instruction-', '');
+                
+                // 更新选中的画质和模型
+                selectedAsyncQuality = quality;
+                selectedAsyncModel = model;
+                selectedModel = model;
+            });
+        });
+
+        // 新增：异步图案提取指令类型选择逻辑
+        asyncPatternTypeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                asyncPatternTypeOptions.forEach(opt => opt.classList.remove('option-active'));
+                option.classList.add('option-active');
+                selectedAsyncInstructionType = option.getAttribute('data-instruction-type');
+                
+                // 显示/隐藏自定义指令输入框
+                if (selectedAsyncInstructionType === 'advanced') {
+                    asyncCustomInstructionContainer.classList.remove('hidden');
+                    setTimeout(() => {
+                        asyncCustomInstructionInput.focus();
+                    }, 300);
+                } else {
+                    asyncCustomInstructionContainer.classList.add('hidden');
+                    asyncCustomInstructionValue = '';
+                    asyncCustomInstructionInput.value = '';
+                }
+                
                 validateProcessButton();
             });
         });
 
-        // 新增：新图案提取（选比例）比例选择逻辑
+        // 新增：异步图案提取比例选择逻辑
+        asyncRatioOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                asyncRatioOptions.forEach(opt => opt.classList.remove('option-active'));
+                option.classList.add('option-active');
+                selectedAsyncRatio = option.getAttribute('data-ratio');
+                asyncRatioRequired.classList.add('hidden');
+                validateProcessButton();
+            });
+        });
+
+        // 新增：异步自定义指令输入处理
+        asyncCustomInstructionInput.addEventListener('input', () => {
+            asyncCustomInstructionValue = asyncCustomInstructionInput.value.trim();
+            asyncInstructionRequired.classList.add('hidden');
+            validateProcessButton();
+        });
+
+        // 新增：合并后的新图案提取与进一步处理指令类型选择逻辑
+        instructionTypeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                instructionTypeOptions.forEach(opt => opt.classList.remove('option-active'));
+                option.classList.add('option-active');
+                selectedInstructionType = option.getAttribute('data-instruction-type');
+                
+                // 显示/隐藏自定义指令输入框
+                if (selectedInstructionType === 'advanced') {
+                    customInstructionContainer.classList.remove('hidden');
+                    setTimeout(() => {
+                        customInstructionInput.focus();
+                    }, 300);
+                } else {
+                    customInstructionContainer.classList.add('hidden');
+                    customInstructionValue = '';
+                    customInstructionInput.value = '';
+                }
+                
+                validateProcessButton();
+            });
+        });
+
+        // 新增：合并后的新图案提取与进一步处理比例选择逻辑
         newRatioOptions.forEach(option => {
             option.addEventListener('click', () => {
                 newRatioOptions.forEach(opt => opt.classList.remove('option-active'));
                 option.classList.add('option-active');
                 selectedNewRatio = option.id.replace('new-ratio-', '').replace('x', ':');
+                // 处理自动选项
+                if (option.id === 'new-ratio-auto') {
+                    selectedNewRatio = '';
+                }
                 newRatioRequired.classList.add('hidden');
                 validateProcessButton();
             });
+        });
+
+        // 新增：合并后的新图案提取与进一步处理自定义指令输入处理
+        customInstructionInput.addEventListener('input', () => {
+            customInstructionValue = customInstructionInput.value.trim();
+            instructionRequired.classList.add('hidden');
+            validateProcessButton();
         });
 
         // 输出风格选择逻辑
@@ -1136,21 +1357,14 @@
             });
         });
 
-        // 自定义指令输入处理
-        customInstructionInput.addEventListener('input', () => {
-            customInstruction = customInstructionInput.value.trim();
-            instructionRequired.classList.add('hidden');
-            validateProcessButton();
-        });
-
         // 验证处理按钮状态 - 核心修改：支持单图或双图上传
         function validateProcessButton() {
             const hasPassword = !!ACCESS_PASSWORD;
             let hasImage = false;
             
             // 根据当前选中的指令检查图片上传状态
-            if (selectedInstruction === 'advanced') {
-                // 进一步处理支持1张或2张图片上传
+            if (selectedInstruction === 'new-ratio-advanced') {
+                // 合并后的新图案提取与进一步处理支持1张或2张图片上传
                 hasImage = imagePreviewContainer1.classList.contains('hidden') === false;
             } else {
                 // 其他处理只需要一张图片
@@ -1160,14 +1374,30 @@
             // 矢量风格需要选择比例
             const vectorStyleValid = selectedInstruction !== 'vector' || !!selectedRatio;
             
-            // 进一步处理需要输入指令
-            const advancedValid = selectedInstruction !== 'advanced' || (!!customInstruction && customInstruction.length >= 5);
+            // 合并后的新图案提取与进一步处理需要验证
+            let newRatioAdvancedValid = true;
+            if (selectedInstruction === 'new-ratio-advanced') {
+                if (selectedInstructionType === 'advanced') {
+                    newRatioAdvancedValid = !!customInstructionValue && customInstructionValue.length >= 5;
+                    if (!newRatioAdvancedValid) {
+                        instructionRequired.classList.remove('hidden');
+                    }
+                }
+            }
             
-            // 新增：新图案提取（选比例）需要选择指令类型和比例
-            const newRatioValid = selectedInstruction !== 'new-ratio' || !!selectedNewRatio;
+            // 新增：异步图案提取验证
+            let asyncPatternValid = true;
+            if (selectedInstruction === 'async-pattern') {
+                if (selectedAsyncInstructionType === 'advanced') {
+                    asyncPatternValid = !!asyncCustomInstructionValue && asyncCustomInstructionValue.length >= 5;
+                    if (!asyncPatternValid) {
+                        asyncInstructionRequired.classList.remove('hidden');
+                    }
+                }
+            }
             
             // 更新按钮状态
-            processBtn.disabled = !(hasPassword && hasImage && vectorStyleValid && advancedValid && newRatioValid);
+            processBtn.disabled = !(hasPassword && hasImage && vectorStyleValid && newRatioAdvancedValid && asyncPatternValid);
         }
 
         // 密码输入实时处理
@@ -1286,12 +1516,6 @@
                 return;
             }
             
-            if (selectedInstruction === 'new-ratio' && !selectedNewRatio) {
-                newRatioRequired.classList.remove('hidden');
-                document.getElementById('new-ratio-instruction-options').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
-            }
-            
             currentWaitAttempt = 0;
             processImage();
             startCooldown();
@@ -1302,13 +1526,15 @@
                 return;
             }
             
-            if (selectedInstruction === 'advanced' && (!customInstruction || customInstruction.length < 5)) {
-                instructionRequired.classList.remove('hidden');
-                customInstructionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => {
-                    customInstructionInput.focus();
-                }, 300);
-                return;
+            if (selectedInstruction === 'new-ratio-advanced') {
+                if (selectedInstructionType === 'advanced' && (!customInstructionValue || customInstructionValue.length < 5)) {
+                    instructionRequired.classList.remove('hidden');
+                    customInstructionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                        customInstructionInput.focus();
+                    }, 300);
+                    return;
+                }
             }
             
             currentWaitAttempt = 0;
@@ -1582,24 +1808,31 @@
                 return;
             }
             
-            if (selectedInstruction === 'advanced' && (!customInstruction || customInstruction.length < 5)) {
-                instructionRequired.classList.remove('hidden');
-                customInstructionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => {
-                    customInstructionInput.focus();
-                }, 300);
-                return;
+            if (selectedInstruction === 'new-ratio-advanced') {
+                if (selectedInstructionType === 'advanced' && (!customInstructionValue || customInstructionValue.length < 5)) {
+                    instructionRequired.classList.remove('hidden');
+                    customInstructionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                        customInstructionInput.focus();
+                    }, 300);
+                    return;
+                }
             }
             
-            // 新增：新图案提取（选比例）需要选择比例
-            if (selectedInstruction === 'new-ratio' && !selectedNewRatio) {
-                newRatioRequired.classList.remove('hidden');
-                document.getElementById('new-ratio-instruction-options').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
+            // 新增：异步图案提取需要验证
+            if (selectedInstruction === 'async-pattern') {
+                if (selectedAsyncInstructionType === 'advanced' && (!asyncCustomInstructionValue || asyncCustomInstructionValue.length < 5)) {
+                    asyncInstructionRequired.classList.remove('hidden');
+                    asyncCustomInstructionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                        asyncCustomInstructionInput.focus();
+                    }, 300);
+                    return;
+                }
             }
             
             processImage();
-            if (selectedInstruction === 'advanced') {
+            if (selectedInstruction === 'new-ratio-advanced') {
                 startMultiCooldown();
             } else {
                 startCooldown();
@@ -1643,19 +1876,23 @@
             }
             
             if (selectedInstruction === 'vector' && !selectedRatio) {
-                showError('请为通用/矢量风格图案选择输出比例');
+                showError('请为矢量风格图案选择输出比例');
                 return;
             }
             
-            if (selectedInstruction === 'advanced' && (!customInstruction || customInstruction.length < 5)) {
-                showError('请输入有效的处理指令（至少5个字符）');
-                return;
+            if (selectedInstruction === 'new-ratio-advanced') {
+                if (selectedInstructionType === 'advanced' && (!customInstructionValue || customInstructionValue.length < 5)) {
+                    showError('请输入有效的处理指令（至少5个字符）');
+                    return;
+                }
             }
             
-            // 新增：新图案提取（选比例）需要选择比例
-            if (selectedInstruction === 'new-ratio' && !selectedNewRatio) {
-                showError('请为新图案提取（选比例）选择输出比例');
-                return;
+            // 新增：异步图案提取需要验证
+            if (selectedInstruction === 'async-pattern') {
+                if (selectedAsyncInstructionType === 'advanced' && (!asyncCustomInstructionValue || asyncCustomInstructionValue.length < 5)) {
+                    showError('请输入有效的处理指令（至少5个字符）');
+                    return;
+                }
             }
             
             errorContainer.classList.add('hidden');
@@ -1677,11 +1914,14 @@
 
                 // 根据API类型调用不同的处理函数
                 let result;
-                if (selectedApiType === 'chat') {
+                if (selectedInstruction === 'async-pattern') {
+                    // 异步图案提取使用视频API
+                    result = await callAsyncVideoAPI(controller.signal, currentSessionId);
+                } else if (selectedApiType === 'chat') {
                     // 矢量风格图案使用chat格式
                     result = await callChatAPI(controller.signal, currentSessionId);
                 } else {
-                    // 新图案提取（选比例）和进一步处理使用image/generations格式
+                    // 合并后的新图案提取与进一步处理使用image/generations格式
                     result = await callImageGenerationsAPI(controller.signal, currentSessionId);
                 }
                 
@@ -1715,7 +1955,7 @@
                 // 处理返回的多张图片
                 if (result.imageUrls && result.imageUrls.length > 0) {
                     // 有多张图片返回
-                    if (selectedInstruction === 'advanced') {
+                    if (selectedInstruction === 'new-ratio-advanced') {
                         // 处理多图上传的结果
                         currentMultiResultImages = result.imageUrls;
                         currentMultiSelectedIndex = 0;
@@ -1786,13 +2026,13 @@
                     }
                 } else {
                     // 只有单张图片返回
-                    // 清空之前的缩略图容器（修复问题1）
+                    // 清空之前的缩略图容器
                     thumbnailContainer.classList.add('hidden');
                     thumbnailContainer.innerHTML = '';
                     multiThumbnailContainer.classList.add('hidden');
                     multiThumbnailContainer.innerHTML = '';
                     
-                    if (selectedInstruction === 'advanced') {
+                    if (selectedInstruction === 'new-ratio-advanced') {
                         multiResultImage.onload = () => {
                             multiResultArea.classList.add('hidden');
                             multiResultImageContainer.classList.remove('hidden');
@@ -1885,91 +2125,175 @@
                 resetProcessingState();
                 clearCooldown();
                 clearMultiCooldown();
+                
+                // 清除异步轮询
+                if (asyncPollingInterval) {
+                    clearInterval(asyncPollingInterval);
+                    asyncPollingInterval = null;
+                }
             }
         }
 
-        // 创建缩略图（单图处理结果）
-        function createThumbnails() {
-            thumbnailContainer.innerHTML = '';
+        // 新增：调用异步视频API
+        async function callAsyncVideoAPI(signal, sessionId) {
+            statusMessage.textContent = '正在提交异步处理任务...';
+            updateProgress(20);
+
+            // 准备图片数据
+            const base64Image = await convertImageToBase64(imagePreview.src);
             
-            if (currentResultImages.length <= 1) {
-                thumbnailContainer.classList.add('hidden');
-                return;
+            // 构建表单数据
+            const formData = new FormData();
+            formData.append('model', selectedAsyncModel);
+            
+            // 根据指令类型设置prompt
+            if (selectedAsyncInstructionType === 'extract') {
+                formData.append('prompt', `把衣服的印花图案平铺开，
+要求：
+1. 保持图案大小、位置、排布不变
+2. 校正图案，还原出图案平整的样子
+3. 把不完整的图案绘制完整
+4. 不要改变图案的颜色和风格
+5. 去掉褶皱，重绘平整
+6. 优化图案主体定位，适合印花使用`);
+            } else {
+                formData.append('prompt', asyncCustomInstructionValue);
             }
             
-            thumbnailContainer.classList.remove('hidden');
+            // 设置尺寸，如果选择"自动"则留空
+            if (selectedAsyncRatio) {
+                formData.append('size', selectedAsyncRatio);
+            }
             
-            currentResultImages.forEach((imageSrc, index) => {
-                const thumbnailItem = document.createElement('div');
-                thumbnailItem.className = `thumbnail-item ${index === currentSelectedIndex ? 'active' : ''}`;
-                thumbnailItem.dataset.index = index;
+            // 将base64转换为blob并添加为文件
+            const base64Response = await fetch(`data:image/jpeg;base64,${base64Image}`);
+            const blob = await base64Response.blob();
+            formData.append('input_reference', blob, 'input_image.jpg');
+            
+            updateProgress(40);
+            statusMessage.textContent = '正在提交任务到服务器...';
+
+            const response = await fetch(VIDEO_API_ENDPOINT, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${ACCESS_PASSWORD}`
+                },
+                body: formData,
+                signal: signal
+            });
+
+            if (response.status === 401) {
+                throw new Error(`API请求失败: Unauthorized（状态码：401）`);
+            }
+
+            if (!response.ok) {
+                let errorDetails = await response.text();
+                try {
+                    const errorJson = JSON.parse(errorDetails);
+                    errorDetails = errorJson.error?.message || errorDetails;
+                } catch (e) {}
+                throw new Error(`API请求失败: ${response.statusText}（状态码：${response.status}）\n${errorDetails}`);
+            }
+
+            updateProgress(60);
+            statusMessage.textContent = '任务提交成功，等待处理...';
+
+            const data = await response.json();
+            
+            // 检查返回数据
+            if (!data.id) {
+                throw new Error('API返回数据中未找到任务ID');
+            }
+            
+            asyncTaskId = data.id;
+            const taskStatus = data.status || 'queued';
+            
+            // 显示任务状态
+            showTaskStatus(taskStatus, data.progress || 0);
+            
+            // 开始轮询查询任务状态
+            return startAsyncTaskPolling(asyncTaskId);
+        }
+
+        // 新增：开始轮询查询异步任务状态
+        async function startAsyncTaskPolling(taskId) {
+            return new Promise((resolve, reject) => {
+                let pollCount = 0;
+                const maxPollCount = ASYNC_MAX_WAIT_TIME / ASYNC_POLLING_INTERVAL;
                 
-                const thumbnailImg = document.createElement('img');
-                thumbnailImg.className = 'thumbnail-img';
-                thumbnailImg.src = imageSrc;
-                thumbnailImg.alt = `结果 ${index + 1}`;
-                thumbnailImg.title = `点击查看结果 ${index + 1}`;
-                
-                thumbnailItem.appendChild(thumbnailImg);
-                thumbnailContainer.appendChild(thumbnailItem);
-                
-                // 点击缩略图切换主图
-                thumbnailItem.addEventListener('click', () => {
-                    if (index === currentSelectedIndex) return;
-                    
-                    // 更新选中状态
-                    document.querySelectorAll('#thumbnail-container .thumbnail-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    thumbnailItem.classList.add('active');
-                    
-                    // 更新主图
-                    currentSelectedIndex = index;
-                    resultImage.src = imageSrc;
-                });
+                asyncPollingInterval = setInterval(async () => {
+                    try {
+                        pollCount++;
+                        
+                        const response = await fetch(`${VIDEO_API_ENDPOINT}/${taskId}`, {
+                            method: "GET",
+                            headers: {
+                                "Authorization": `Bearer ${ACCESS_PASSWORD}`,
+                                "Content-Type": "application/json"
+                            }
+                        });
+
+                        if (!response.ok) {
+                            clearInterval(asyncPollingInterval);
+                            reject(new Error(`查询任务状态失败: ${response.statusText}`));
+                            return;
+                        }
+
+                        const data = await response.json();
+                        const status = data.status || 'unknown';
+                        const progress = data.progress || 0;
+                        
+                        // 更新状态显示
+                        showTaskStatus(status, progress);
+                        
+                        if (status === 'completed') {
+                            clearInterval(asyncPollingInterval);
+                            
+                            if (data.video_url) {
+                                resolve({ imageUrl: data.video_url, base64Image: null });
+                            } else {
+                                reject(new Error('任务已完成但未返回图片URL'));
+                            }
+                        } else if (status === 'failed') {
+                            clearInterval(asyncPollingInterval);
+                            reject(new Error('异步任务处理失败'));
+                        } else if (pollCount >= maxPollCount) {
+                            clearInterval(asyncPollingInterval);
+                            reject(new Error('异步任务处理超时'));
+                        }
+                    } catch (error) {
+                        clearInterval(asyncPollingInterval);
+                        reject(error);
+                    }
+                }, ASYNC_POLLING_INTERVAL);
             });
         }
-        
-        // 创建缩略图（多图处理结果）
-        function createMultiThumbnails() {
-            multiThumbnailContainer.innerHTML = '';
+
+        // 新增：显示异步任务状态
+        function showTaskStatus(status, progress) {
+            let statusText = '';
+            let statusClass = '';
             
-            if (currentMultiResultImages.length <= 1) {
-                multiThumbnailContainer.classList.add('hidden');
-                return;
+            switch(status) {
+                case 'queued':
+                    statusText = '任务排队中...';
+                    statusClass = 'async-status-queued';
+                    break;
+                case 'in_progress':
+                    statusText = `任务处理中 ${progress}%`;
+                    statusClass = 'async-status-in-progress';
+                    updateProgress(60 + (progress * 0.4)); // 60-100% 对应处理进度
+                    break;
+                case 'completed':
+                    statusText = '任务已完成';
+                    statusClass = 'async-status-completed';
+                    updateProgress(100);
+                    break;
+                default:
+                    statusText = `任务状态: ${status}`;
             }
             
-            multiThumbnailContainer.classList.remove('hidden');
-            
-            currentMultiResultImages.forEach((imageSrc, index) => {
-                const thumbnailItem = document.createElement('div');
-                thumbnailItem.className = `thumbnail-item ${index === currentMultiSelectedIndex ? 'active' : ''}`;
-                thumbnailItem.dataset.index = index;
-                
-                const thumbnailImg = document.createElement('img');
-                thumbnailImg.className = 'thumbnail-img';
-                thumbnailImg.src = imageSrc;
-                thumbnailImg.alt = `结果 ${index + 1}`;
-                thumbnailImg.title = `点击查看结果 ${index + 1}`;
-                
-                thumbnailItem.appendChild(thumbnailImg);
-                multiThumbnailContainer.appendChild(thumbnailItem);
-                
-                // 点击缩略图切换主图
-                thumbnailItem.addEventListener('click', () => {
-                    if (index === currentMultiSelectedIndex) return;
-                    
-                    // 更新选中状态
-                    document.querySelectorAll('#multi-thumbnail-container .thumbnail-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    thumbnailItem.classList.add('active');
-                    
-                    // 更新主图
-                    currentMultiSelectedIndex = index;
-                    multiResultImage.src = imageSrc;
-                });
-            });
+            statusMessage.innerHTML = `<span class="${statusClass}">${statusText}</span>`;
         }
 
         // 调用Chat API（用于矢量风格图案）
@@ -2124,7 +2448,7 @@
             return { imageUrl: imageUrl, base64Image: base64ImageResult };
         }
 
-        // 调用Image Generations API（用于新图案提取和进一步处理）
+        // 调用Image Generations API（用于合并后的新图案提取与进一步处理）
         async function callImageGenerationsAPI(signal, sessionId) {
             statusMessage.textContent = '正在准备图片数据...';
             updateProgress(20);
@@ -2137,29 +2461,34 @@
             };
 
             // 根据指令类型设置不同的参数
-            if (selectedInstruction === 'new-ratio') {
-                // 新图案提取（选比例）
-                const base64Image = await convertImageToBase64(imagePreview.src);
-                payload.prompt = instructionDetails['new-ratio'][selectedInstructionType];
-                payload.image = `data:image/jpeg;base64,${base64Image}`;
-                payload.size = selectedNewRatio; // 使用选定的比例
-            } else if (selectedInstruction === 'advanced') {
-                // 进一步处理
-                payload.prompt = customInstruction;
-                payload.size = ""; // 进一步处理使用auto
+            if (selectedInstruction === 'new-ratio-advanced') {
+                // 合并后的新图案提取与进一步处理
+                const instructionType = selectedInstructionType;
                 
-                // 准备图片数组
-                const imageArray = [];
-                const base64Image1 = await convertImageToBase64(imagePreview1.src);
-                imageArray.push(`data:image/jpeg;base64,${base64Image1}`);
-                
-                // 如果第二张图片已上传，也添加进去
-                if (imagePreviewContainer2.classList.contains('hidden') === false) {
-                    const base64Image2 = await convertImageToBase64(imagePreview2.src);
-                    imageArray.push(`data:image/jpeg;base64,${base64Image2}`);
+                if (instructionType === 'pattern-extract') {
+                    // 图案提取
+                    const base64Image = await convertImageToBase64(imagePreview1.src);
+                    payload.prompt = instructionDetails['new-ratio-advanced']['pattern-extract'];
+                    payload.image = `data:image/jpeg;base64,${base64Image}`;
+                    payload.size = selectedNewRatio || ''; // 使用选定的比例，空表示自动
+                } else if (instructionType === 'advanced') {
+                    // 进一步处理
+                    payload.prompt = customInstructionValue;
+                    payload.size = selectedNewRatio || ''; // 使用选定的比例
+                    
+                    // 准备图片数组
+                    const imageArray = [];
+                    const base64Image1 = await convertImageToBase64(imagePreview1.src);
+                    imageArray.push(`data:image/jpeg;base64,${base64Image1}`);
+                    
+                    // 如果第二张图片已上传，也添加进去
+                    if (imagePreviewContainer2.classList.contains('hidden') === false) {
+                        const base64Image2 = await convertImageToBase64(imagePreview2.src);
+                        imageArray.push(`data:image/jpeg;base64,${base64Image2}`);
+                    }
+                    
+                    payload.image = imageArray;
                 }
-                
-                payload.image = imageArray;
             }
 
             updateProgress(40);
@@ -2341,7 +2670,7 @@
                     processCount++;
                     updateProcessCount();
                     
-                    if (selectedInstruction === 'advanced') {
+                    if (selectedInstruction === 'new-ratio-advanced') {
                         multiResultImage.onload = () => {
                             multiResultArea.classList.add('hidden');
                             multiResultImageContainer.classList.remove('hidden');
@@ -2796,6 +3125,90 @@ async function downloadImage(imageSrc, prefix) {
             }
         }
 
+        // 创建缩略图（单图处理结果）
+        function createThumbnails() {
+            thumbnailContainer.innerHTML = '';
+            
+            if (currentResultImages.length <= 1) {
+                thumbnailContainer.classList.add('hidden');
+                return;
+            }
+            
+            thumbnailContainer.classList.remove('hidden');
+            
+            currentResultImages.forEach((imageSrc, index) => {
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = `thumbnail-item ${index === currentSelectedIndex ? 'active' : ''}`;
+                thumbnailItem.dataset.index = index;
+                
+                const thumbnailImg = document.createElement('img');
+                thumbnailImg.className = 'thumbnail-img';
+                thumbnailImg.src = imageSrc;
+                thumbnailImg.alt = `结果 ${index + 1}`;
+                thumbnailImg.title = `点击查看结果 ${index + 1}`;
+                
+                thumbnailItem.appendChild(thumbnailImg);
+                thumbnailContainer.appendChild(thumbnailItem);
+                
+                // 点击缩略图切换主图
+                thumbnailItem.addEventListener('click', () => {
+                    if (index === currentSelectedIndex) return;
+                    
+                    // 更新选中状态
+                    document.querySelectorAll('#thumbnail-container .thumbnail-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    thumbnailItem.classList.add('active');
+                    
+                    // 更新主图
+                    currentSelectedIndex = index;
+                    resultImage.src = imageSrc;
+                });
+            });
+        }
+        
+        // 创建缩略图（多图处理结果）
+        function createMultiThumbnails() {
+            multiThumbnailContainer.innerHTML = '';
+            
+            if (currentMultiResultImages.length <= 1) {
+                multiThumbnailContainer.classList.add('hidden');
+                return;
+            }
+            
+            multiThumbnailContainer.classList.remove('hidden');
+            
+            currentMultiResultImages.forEach((imageSrc, index) => {
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = `thumbnail-item ${index === currentMultiSelectedIndex ? 'active' : ''}`;
+                thumbnailItem.dataset.index = index;
+                
+                const thumbnailImg = document.createElement('img');
+                thumbnailImg.className = 'thumbnail-img';
+                thumbnailImg.src = imageSrc;
+                thumbnailImg.alt = `结果 ${index + 1}`;
+                thumbnailImg.title = `点击查看结果 ${index + 1}`;
+                
+                thumbnailItem.appendChild(thumbnailImg);
+                multiThumbnailContainer.appendChild(thumbnailItem);
+                
+                // 点击缩略图切换主图
+                thumbnailItem.addEventListener('click', () => {
+                    if (index === currentMultiSelectedIndex) return;
+                    
+                    // 更新选中状态
+                    document.querySelectorAll('#multi-thumbnail-container .thumbnail-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    thumbnailItem.classList.add('active');
+                    
+                    // 更新主图
+                    currentMultiSelectedIndex = index;
+                    multiResultImage.src = imageSrc;
+                });
+            });
+        }
+
         // 图片放大查看功能
         function openImageZoom(imageSrc) {
             zoomImage.src = imageSrc;
@@ -2862,6 +3275,7 @@ async function downloadImage(imageSrc, prefix) {
             if (cooldownTimer) clearInterval(cooldownTimer);
             if (multiCooldownTimer) clearInterval(multiCooldownTimer);
             if (paintingTimer) clearInterval(paintingTimer);
+            if (asyncPollingInterval) clearInterval(asyncPollingInterval); // 新增
         });
 
         // 更新进度
@@ -2869,11 +3283,6 @@ async function downloadImage(imageSrc, prefix) {
             progressBar.style.width = `${percent}%`;
             progressText.textContent = `${percent}%`;
         }
-
-        // 默认选择第一个指令
-        if (instructionOptions.length > 0) {
-            instructionOptions[0].click();
-        }
     </script>
 </body>
-</html>
+</html> 
