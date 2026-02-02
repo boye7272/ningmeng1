@@ -881,9 +881,9 @@
         let asyncCustomInstructionValue = '';
         let asyncTaskId = null;
         let asyncPollingInterval = null;
-        const ASYNC_POLLING_INTERVAL = 5000; // 5秒轮询间隔
+        const ASYNC_POLLING_INTERVAL = 10000; // 5秒轮询间隔
         const VIDEO_API_ENDPOINT = "https://api.tu-zi.com/v1/videos";
-        const ASYNC_MAX_WAIT_TIME = 300000; // 5分钟最大等待时间
+        const ASYNC_MAX_WAIT_TIME = 1200000; // 5分钟最大等待时间
         
         // 新增：多图相关变量
         let currentResultImages = []; // 存储当前处理结果的所有图片
@@ -3286,3 +3286,4 @@ async function downloadImage(imageSrc, prefix) {
     </script>
 </body>
 </html> 
+
