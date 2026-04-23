@@ -1179,7 +1179,7 @@
                     
                     ratioRequired.classList.add('hidden');
                     
-                    selectedModel = 'gpt-image-1.5';
+                    selectedModel = 'gpt-image-2';
                 }
                 
                 // 验证按钮状态
@@ -2099,7 +2099,7 @@
                 
                 if (error.message.includes('Service Unavailable') && 
                     error.message.includes('503') && 
-                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
+                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-2 均无可用渠道，请更换分组尝试')) {
                     modals.changeToken.classList.add('active');
                     accessPasswordInput.value = '';
                     ACCESS_PASSWORD = '';
@@ -2368,7 +2368,7 @@
             
             if (response.status === 503) {
                 const errorDetails = await response.text();
-                if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
+                if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-2 均无可用渠道，请更换分组尝试')) {
                     throw new Error(`API请求失败: Service Unavailable（状态码：503）\n${errorDetails}`);
                 }
             }
@@ -2510,7 +2510,7 @@
             
             if (response.status === 503) {
                 const errorDetails = await response.text();
-                if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
+                if (errorDetails.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-2 均无可用渠道，请更换分组尝试')) {
                     throw new Error(`API请求失败: Service Unavailable（状态码：503）\n${errorDetails}`);
                 }
             }
@@ -2608,7 +2608,7 @@
                     }
                     
                     if (response.status === 503) {
-                        if (await response.text().includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
+                        if (await response.text().includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-2 均无可用渠道，请更换分组尝试')) {
                             modals.changeToken.classList.add('active');
                             accessPasswordInput.value = '';
                             ACCESS_PASSWORD = '';
@@ -2727,7 +2727,7 @@
                 
                 if (error.message.includes('Service Unavailable') && 
                     error.message.includes('503') && 
-                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1.5 均无可用渠道，请更换分组尝试')) {
+                    error.message.includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-2 均无可用渠道，请更换分组尝试')) {
                     modals.changeToken.classList.add('active');
                     accessPasswordInput.value = '';
                     ACCESS_PASSWORD = '';
