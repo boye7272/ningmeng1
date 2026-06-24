@@ -88,7 +88,7 @@
                 font-weight: bold;
                 padding: 2px 6px;
                 border-radius: 10px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             }
             .modal {
                 position: fixed;
@@ -136,7 +136,7 @@
                 left: 0;
                 right: 0;
                 height: 80px;
-                background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+                background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
                 display: flex;
                 gap: 8px;
                 padding: 8px;
@@ -404,7 +404,7 @@
                             </div>
                         </div>
 
-                        <!-- 矢量风格图案（已修改） -->
+                        <!-- 矢量风格图案（已修改 - 新比例） -->
                         <div class="instruction-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-custom flex-1 min-w-[200px]" data-instruction="vector" data-api-type="image-generations">
                             <h4 class="font-medium text-gray-800 mb-2">图案提取（选比例）2</h4>
                             <p class="text-sm text-gray-600">图案提取（选比例）备用处理不了的图可以试试此处理方式，缺点：图案提取一致性较差</p>
@@ -424,14 +424,18 @@
                                 <div>
                                     <p class="text-sm text-gray-600 mb-1">输出比例：</p>
                                     <div class="flex gap-2 flex-wrap">
-                                        <button type="button" id="vector-ratio-1024x1024" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1024x1024">1024x1024（方图）</button>
-                                        <button type="button" id="vector-ratio-1536x1024" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1536x1024">1536x1024（横图）</button>
-                                        <button type="button" id="vector-ratio-1024x1536" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1024x1536">1024x1536（竖图）</button>
-                                        <button type="button" id="vector-ratio-2048x2048" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="2048x2048">2048x2048（2K 方图）</button>
-                                        <button type="button" id="vector-ratio-2048x1152" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="2048x1152">2048x1152（2K 横图）</button>
-                                        <button type="button" id="vector-ratio-3840x2160" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="3840x2160">3840x2160（4K 横图）</button>
-                                        <button type="button" id="vector-ratio-2160x3840" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="2160x3840">2160x3840（4K 竖图）</button>
-                                        <button type="button" id="vector-ratio-auto" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-size="">自动</button>
+                                        <button type="button" id="vector-ratio-1x1" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1254x1254">1:1</button>
+                                        <button type="button" id="vector-ratio-2x3" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1024x1536">2:3</button>
+                                        <button type="button" id="vector-ratio-3x2" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1536x1024">3:2</button>
+                                        <button type="button" id="vector-ratio-3x4" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1086x1448">3:4</button>
+                                        <button type="button" id="vector-ratio-4x3" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1448x1086">4:3</button>
+                                        <button type="button" id="vector-ratio-4x5" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1122x1402">4:5</button>
+                                        <button type="button" id="vector-ratio-5x4" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1402x1122">5:4</button>
+                                        <button type="button" id="vector-ratio-16x9" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1672x941">16:9</button>
+                                        <button type="button" id="vector-ratio-9x16" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="941x1672">9:16</button>
+                                        <button type="button" id="vector-ratio-21x9" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="1915x821">21:9</button>
+                                        <button type="button" id="vector-ratio-9x21" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom" data-size="821x1915">9:21</button>
+                                        <button type="button" id="vector-ratio-auto" class="vector-ratio-option px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:border-primary transition-custom option-active" data-size="auto">自动</button>
                                     </div>
                                     <p id="vector-ratio-required" class="mt-1 text-xs text-red-500 hidden">请选择输出比例</p>
                                 </div>
@@ -640,7 +644,7 @@
             let asyncTaskId = null;
             let asyncPollingInterval = null;
             let selectedVectorInstructionType = 'pattern-extract';
-            let selectedVectorSize = '';
+            let selectedVectorSize = 'auto';
             let vectorCustomInstructionValue = '';
 
             const ASYNC_POLLING_INTERVAL = 10000;
@@ -743,7 +747,7 @@
 3. 不要改变图案排布
 4. 不要改变图案位置
 5. 图案缺失部分向外补充完整
-6. 不要改变图案的颜色和风格`
+6. 不要改变图案的颜色`
             };
 
             const qualityModelMap = {
@@ -1532,7 +1536,7 @@
                         payload.prompt = vectorCustomInstructionValue;
                     }
                     payload.image = `data:image/jpeg;base64,${base64Image}`;
-                    payload.size = selectedVectorSize || '';
+                    payload.size = selectedVectorSize || 'auto';
                 }
                 updateProgress(40);
                 statusMessage.textContent = 'AI正在处理图案，请耐心等待...';
